@@ -3,6 +3,7 @@ provider: docker
 services:
   db:
     command: docker-compose up -d postgres
+    port: 5432
     healthcheck:
       url: http://localhost:5432/health
       interval: 5s
@@ -10,6 +11,7 @@ services:
       retries: 5
   api:
     command: cd server && npm install && npm run dev
+    port: 5000
     healthcheck:
       url: http://localhost:5000/api/health
       interval: 2s
@@ -19,6 +21,7 @@ services:
       - db
   web:
     command: cd client && npm install && npm run dev
+    port: 3000
     healthcheck:
       url: http://localhost:3000
       interval: 2s
@@ -50,5 +53,4 @@ docker:
   image: ubuntu:22.04
   dind: true
 hooks:
-  setup: .oursky/hooks/setup.sh
-  dev: .oursky/hooks/dev.sh
+  setup: .vendatta/hooks/setup.sh
