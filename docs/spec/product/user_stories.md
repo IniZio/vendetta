@@ -29,7 +29,7 @@
 > *As a team lead, I want standardized agent configurations across my team so that all developers get consistent AI assistance regardless of their preferred tools.*
 
 - **Acceptance Criteria**:
-    - Shared templates in `.oursky/templates/` follow open standards
+    - Shared templates in `.vendatta/templates/` follow open standards
     - Agent-specific configs generated from templates with team standards
     - Easy customization of capabilities per project or team needs
     - Version-controlled templates with gitignored generated configs

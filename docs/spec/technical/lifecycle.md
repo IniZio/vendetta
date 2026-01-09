@@ -1,6 +1,6 @@
 # Technical Specification: Lifecycle & Config
 
-## 1. Project Configuration (`.oursky/config.yaml`)
+## 1. Project Configuration (`.vendatta/config.yaml`)
 
 ```yaml
 name: project-name
@@ -19,14 +19,14 @@ agent:
   role: full-stack # Base role for rule selection
 
 hooks:
-  setup: .oursky/hooks/setup.sh
-  dev: .oursky/hooks/dev.sh
+  setup: .vendatta/hooks/setup.sh
+  dev: .vendatta/hooks/dev.sh
 ```
 
 ## 2. Lifecycle States
 
 ### **`init`**
-Scaffolds the `.oursky` directory. Creates the base rules and a default provider configuration.
+Scaffolds the `.vendatta` directory. Creates the base rules and a default provider configuration.
 
 ### **`provision` (`oursky dev`)**
 1.  **Worktree**: A new git worktree is created for the target branch.

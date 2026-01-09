@@ -8,7 +8,7 @@ Coordinate the lifecycle of a dev environment: Worktree creation, Container prov
 
 ## 🛠 Implementation Details
 1.  **Worktree Manager**:
-    - Add `git worktree` at `.oursky/worktrees/[branch]`.
+    - Add `git worktree` at `.vendatta/worktrees/[branch]`.
     - Handle absolute path resolution for Docker.
 2.  **Lifecycle Orchestration**:
     - Sequence: `Load Config` -> `Add Worktree` -> `Provider Create` -> `Provider Start` -> `Exec Setup Hook`.

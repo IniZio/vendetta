@@ -109,7 +109,7 @@ func updateVendatta() error {
 
 	// Check if we can write to the directory
 	dir := filepath.Dir(currentPath)
-	testFile := filepath.Join(dir, ".oursky_write_test")
+	testFile := filepath.Join(dir, ".vendatta_write_test")
 	f, err := os.Create(testFile)
 	if err != nil {
 		return fmt.Errorf("cannot write to %s. Please run with sudo or reinstall to a user-writable directory like ~/.local/bin", dir)
@@ -137,7 +137,7 @@ func updateVendatta() error {
 }
 
 func syncRemoteTarget(targetName string) error {
-	cfg, err := config.LoadConfig(".oursky/config.yaml")
+	cfg, err := config.LoadConfig(".vendatta/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -153,7 +153,7 @@ func syncRemoteTarget(targetName string) error {
 		return fmt.Errorf("sync target '%s' not found in config", targetName)
 	}
 
-	fmt.Printf("Syncing .oursky to '%s' (%s)...\n", target.Name, target.URL)
+	fmt.Printf("Syncing .vendatta to '%s' (%s)...\n", target.Name, target.URL)
 
 	fmt.Println("Pulling latest changes from origin...")
 	if err := runGit("pull", "origin", "main"); err != nil {
@@ -170,21 +170,21 @@ func syncRemoteTarget(targetName string) error {
 		}
 	}
 
-	fmt.Println("Creating filtered branch with .oursky content...")
+	fmt.Println("Creating filtered branch with .vendatta content...")
 	if err := runGit("checkout", "-b", "temp-sync"); err != nil {
 		return fmt.Errorf("failed to create temp branch: %w", err)
 	}
 	if err := runGit("rm", "-rf", "--cached", "."); err != nil {
 		return fmt.Errorf("failed to clear index: %w", err)
 	}
-	if err := runGit("add", ".oursky"); err != nil {
-		return fmt.Errorf("failed to add .oursky: %w", err)
+	if err := runGit("add", ".vendatta"); err != nil {
+		return fmt.Errorf("failed to add .vendatta: %w", err)
 	}
-	if err := runGit("commit", "-m", "Sync .oursky directory"); err != nil {
+	if err := runGit("commit", "-m", "Sync .vendatta directory"); err != nil {
 		return fmt.Errorf("failed to commit: %w", err)
 	}
 	if err := runGit("push", target.Name, "temp-sync:main"); err != nil {
-		return fmt.Errorf("failed to push .oursky: %w", err)
+		return fmt.Errorf("failed to push .vendatta: %w", err)
 	}
 	if err := runGit("checkout", "main"); err != nil {
 		return fmt.Errorf("failed to checkout main: %w", err)
@@ -193,18 +193,18 @@ func syncRemoteTarget(targetName string) error {
 		return fmt.Errorf("failed to delete temp branch: %w", err)
 	}
 
-	fmt.Printf("Successfully synced .oursky to '%s'!\n", target.Name)
+	fmt.Printf("Successfully synced .vendatta to '%s'!\n", target.Name)
 	return nil
 }
 
 func syncAllRemotes() error {
-	cfg, err := config.LoadConfig(".oursky/config.yaml")
+	cfg, err := config.LoadConfig(".vendatta/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	if len(cfg.SyncTargets) == 0 {
-		fmt.Println("No sync targets configured in .oursky/config.yaml")
+		fmt.Println("No sync targets configured in .vendatta/config.yaml")
 		return nil
 	}
 
@@ -243,7 +243,7 @@ func main() {
 
 	initCmd := &cobra.Command{
 		Use:   "init",
-		Short: "Initialize .oursky in the current project",
+		Short: "Initialize .vendatta in the current project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return controller.Init(context.Background())
 		},
@@ -319,7 +319,7 @@ func main() {
 		Short: "Pull templates from a git repository",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			manager := templates.NewManager(".oursky")
+			manager := templates.NewManager(".vendatta")
 			repo := templates.TemplateRepo{
 				URL: args[0],
 			}
@@ -338,7 +338,7 @@ func main() {
 		Use:   "list",
 		Short: "List pulled template repositories",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			manager := templates.NewManager(".oursky")
+			manager := templates.NewManager(".vendatta")
 			repos, err := manager.ListRepos()
 			if err != nil {
 				return err
@@ -361,8 +361,8 @@ func main() {
 		Use:   "merge",
 		Short: "Merge templates from all sources",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			manager := templates.NewManager(".oursky")
-			data, err := manager.Merge(".oursky")
+			manager := templates.NewManager(".vendatta")
+			data, err := manager.Merge(".vendatta")
 			if err != nil {
 				return err
 			}
@@ -382,7 +382,7 @@ func main() {
 
 	syncCmd := &cobra.Command{
 		Use:   "sync [target-name]",
-		Short: "Sync .oursky directory to a configured remote target",
+		Short: "Sync .vendatta directory to a configured remote target",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return syncRemoteTarget(args[0])
@@ -391,7 +391,7 @@ func main() {
 
 	syncAllCmd := &cobra.Command{
 		Use:   "sync-all",
-		Short: "Sync all configured remotes from .oursky/config.yaml",
+		Short: "Sync all configured remotes from .vendatta/config.yaml",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return syncAllRemotes()
 		},

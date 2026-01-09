@@ -248,7 +248,7 @@ This eliminates manual port management and ensures your services can communicate
    ```
 
 4. **Code with AI assistance**:
-   - Open `.oursky/worktrees/new-feature/` in Cursor
+   - Open `.vendatta/worktrees/new-feature/` in Cursor
    - AI agent connects automatically with full environment access
 
 ## Complete Feature Walkthrough
@@ -264,7 +264,7 @@ For existing projects, pull shared configurations and templates:
 vendatta init
 
 # Pull agent templates from a remote repository
-vendatta templates pull https://github.com/IniZio/dotagents.git
+vendatta templates pull https://github.com/IniZio/dotvendatta
 
 # List pulled template repositories
 vendatta templates list
@@ -275,7 +275,7 @@ vendatta templates merge
 
 ### 2. Configure Your Development Environment
 
-Edit `.oursky/config.yaml` to define your stack:
+Edit `.vendatta/config.yaml` to define your stack:
 
 ```yaml
 name: "my-fullstack-app"
@@ -344,7 +344,7 @@ vendatta agent <session-id>
 
 ### 7. Sync Configurations
 
-Push your `.oursky` configs to remote targets:
+Push your `.vendatta` configs to remote targets:
 
 ```bash
 # Sync to a specific target
@@ -366,7 +366,7 @@ vendatta list
 
 ### Troubleshooting
 
-- **Services not starting**: Check `.oursky/config.yaml` syntax
+- **Services not starting**: Check `.vendatta/config.yaml` syntax
 - **Ports not mapped**: Ensure services have healthchecks
 - **Agents not connecting**: Verify MCP port (default 3001) is available
 - **Git conflicts**: Pull latest changes before `vendatta dev`

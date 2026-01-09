@@ -19,9 +19,9 @@ type TemplateData struct {
 }
 
 // Merge merges templates from multiple sources with priority order:
-// 1. Base templates (.oursky/templates/)
-// 2. Template repos (.oursky/template-repos/*/templates/)
-// 3. Agent overrides (.oursky/agents/)
+// 1. Base templates (.vendatta/templates/)
+// 2. Template repos (.vendatta/template-repos/*/templates/)
+// 3. Agent overrides (.vendatta/agents/)
 func (m *Manager) Merge(baseDir string) (*TemplateData, error) {
 	data := &TemplateData{
 		Skills:   make(map[string]interface{}),

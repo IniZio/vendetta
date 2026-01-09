@@ -130,22 +130,22 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		gitignore    string
 	}{
 		"cursor": {
-			templatePath: ".oursky/agents/cursor/mcp.json.tpl",
+			templatePath: ".vendatta/agents/cursor/mcp.json.tpl",
 			outputPath:   ".cursor/mcp.json",
 			gitignore:    ".cursor/",
 		},
 		"opencode": {
-			templatePath: ".oursky/agents/opencode/opencode.json.tpl",
+			templatePath: ".vendatta/agents/opencode/opencode.json.tpl",
 			outputPath:   "opencode.json",
 			gitignore:    ".opencode/",
 		},
 		"claude-desktop": {
-			templatePath: ".oursky/agents/claude-desktop/claude_desktop_config.json.tpl",
+			templatePath: ".vendatta/agents/claude-desktop/claude_desktop_config.json.tpl",
 			outputPath:   "claude_desktop_config.json",
 			gitignore:    "claude_desktop_config.json",
 		},
 		"claude-code": {
-			templatePath: ".oursky/agents/claude-code/claude_code_config.json.tpl",
+			templatePath: ".vendatta/agents/claude-code/claude_code_config.json.tpl",
 			outputPath:   "claude_code_config.json",
 			gitignore:    "claude_code_config.json",
 		},

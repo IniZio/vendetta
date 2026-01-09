@@ -6,7 +6,7 @@ The Agent Gateway is a Model Context Protocol (MCP) server built into the `oursk
 ## 2. MCP Protocol Details
 - **Transport**: JSON-RPC over Standard Input/Output (STDIO)
 - **Session Context**: Started per session: `./oursky agent [session-id]`
-- **Server Location**: Configurable via `.oursky/config.yaml` (default: localhost:3001)
+- **Server Location**: Configurable via `.vendatta/config.yaml` (default: localhost:3001)
 
 ## 3. Capabilities
 
@@ -23,7 +23,7 @@ Automatically registers skills from shared templates as MCP tools based on agent
 
 ### **Template Architecture**
 ```
-.oursky/
+.vendatta/
 ├── config.yaml                 # Main configuration with agent list
 ├── templates/                  # Shared templates (open standards)
 │   ├── skills/                 # agentskills.io compliant
@@ -38,8 +38,8 @@ Automatically registers skills from shared templates as MCP tools based on agent
 ```
 
 ### **Generation Process**
-1. **Read** `.oursky/config.yaml` for enabled agents
-2. **Load** agent-specific templates from `.oursky/agents/{agent}/`
+1. **Read** `.vendatta/config.yaml` for enabled agents
+2. **Load** agent-specific templates from `.vendatta/agents/{agent}/`
 3. **Merge** templates from base, remote repos, and agent overrides using recursive merging
 4. **Substitute** variables (MCP host/port, auth tokens, project metadata)
 5. **Copy** referenced shared templates to agent directories
@@ -57,7 +57,7 @@ Automatically registers skills from shared templates as MCP tools based on agent
 ### **Supported Agents**
 
 #### **Cursor**
-- **Template**: `.oursky/agents/cursor/mcp.json.tpl`
+- **Template**: `.vendatta/agents/cursor/mcp.json.tpl`
 - **Output**: `.cursor/mcp.json`
 - **Format**: JSON with mcpServers object
 - **Transport**: HTTP to MCP gateway
@@ -94,7 +94,7 @@ YAML with steps, environment variables, and metadata.
 ## 6. Configuration Example
 
 ```yaml
-# .oursky/config.yaml
+# .vendatta/config.yaml
 name: my-project
 agents:
   - name: opencode

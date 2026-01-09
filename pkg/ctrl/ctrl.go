@@ -33,15 +33,15 @@ func NewBaseController(providers []provider.Provider) *BaseController {
 
 func (c *BaseController) Init(ctx context.Context) error {
 	dirs := []string{
-		".oursky/hooks",
-		".oursky/worktrees",
-		".oursky/agents/rules",
-		".oursky/agents/skills",
-		".oursky/agents/commands",
-		".oursky/templates/skills",
-		".oursky/templates/rules",
-		".oursky/templates/commands",
-		".oursky/remotes",
+		".vendatta/hooks",
+		".vendatta/worktrees",
+		".vendatta/agents/rules",
+		".vendatta/agents/skills",
+		".vendatta/agents/commands",
+		".vendatta/templates/skills",
+		".vendatta/templates/rules",
+		".vendatta/templates/commands",
+		".vendatta/remotes",
 	}
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
@@ -58,10 +58,10 @@ docker:
   image: ubuntu:22.04
   dind: true
 hooks:
-  setup: .oursky/hooks/setup.sh
-  dev: .oursky/hooks/dev.sh
+  setup: .vendatta/hooks/setup.sh
+  dev: .vendatta/hooks/dev.sh
 `
-	if err := os.WriteFile(".oursky/config.yaml", []byte(configYaml), 0644); err != nil {
+	if err := os.WriteFile(".vendatta/config.yaml", []byte(configYaml), 0644); err != nil {
 		return err
 	}
 
@@ -69,7 +69,7 @@ hooks:
 # Install docker if dind is enabled
 echo "Setting up environment..."
 `
-	if err := os.WriteFile(".oursky/hooks/setup.sh", []byte(setupSh), 0755); err != nil {
+	if err := os.WriteFile(".vendatta/hooks/setup.sh", []byte(setupSh), 0755); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ echo "Setting up environment..."
 - Follow existing code patterns.
 - Ensure type safety.
 `
-	if err := os.WriteFile(".oursky/agents/rules/base.md", []byte(baseRule), 0644); err != nil {
+	if err := os.WriteFile(".vendatta/agents/rules/base.md", []byte(baseRule), 0644); err != nil {
 		return err
 	}
 
@@ -85,18 +85,18 @@ echo "Setting up environment..."
 }
 
 func (c *BaseController) Dev(ctx context.Context, branch string) error {
-	cfg, err := config.LoadConfig(".oursky/config.yaml")
+	cfg, err := config.LoadConfig(".vendatta/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	// Initialize remotes
-	if err := cfg.InitializeRemotes(".oursky"); err != nil {
+	if err := cfg.InitializeRemotes(".vendatta"); err != nil {
 		return fmt.Errorf("failed to initialize remotes: %w", err)
 	}
 
 	// Get merged templates
-	merged, err := cfg.GetMergedTemplates(".oursky")
+	merged, err := cfg.GetMergedTemplates(".vendatta")
 	if err != nil {
 		return fmt.Errorf("failed to merge templates: %w", err)
 	}
@@ -106,7 +106,7 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 		return fmt.Errorf("provider %s not found", cfg.Provider)
 	}
 
-	wtManager := worktree.NewManager(".", ".oursky/worktrees")
+	wtManager := worktree.NewManager(".", ".vendatta/worktrees")
 	wtPath, err := wtManager.Add(branch)
 	if err != nil {
 		return fmt.Errorf("failed to setup worktree: %w", err)
