@@ -25,7 +25,7 @@ Automatically registers skills from shared templates as MCP tools based on agent
 ```
 .oursky/
 ├── config.yaml                 # Main configuration with agent list
-├── shared/                     # Shared capabilities (open standards)
+├── templates/                  # Shared templates (open standards)
 │   ├── skills/                 # agentskills.io compliant
 │   ├── commands/               # Standardized command definitions
 │   └── rules/                  # agents.md compliant
