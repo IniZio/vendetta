@@ -24,13 +24,13 @@ echo "Waiting for database..."
 sleep 10
 
 echo "Starting API server..."
-cd /workspace/server && npm install && npm run dev &
+cd /workspace/server && npm install && HOST=0.0.0.0 PORT=5000 npm run dev &
 API_PID=$!
 
 sleep 5
 
 echo "Starting web client..."
-cd /workspace/client && npm install && npm run dev &
+cd /workspace/client && npm install && HOST=0.0.0.0 PORT=3000 npm run dev &
 WEB_PID=$!
 
 echo "Services starting... PIDs: DB($DB_PID), API($API_PID), WEB($WEB_PID)"
