@@ -310,7 +310,7 @@ sync_targets:
 vendatta dev feature-branch
 ```
 
-Vendatta will show progress as it:
+The command will start the session in the background and exit once ready. Vendatta will show progress as it:
 - Initializes template remotes
 - Merges AI agent templates
 - Sets up Git worktree
@@ -339,6 +339,7 @@ Example output:
 📂 Worktree: /path/to/project/.vendatta/worktrees/feature-branch
 💡 Open this directory in your AI agent (Cursor, OpenCode, etc.)
 🔍 Use 'vendatta list' to see active sessions
+🛑 Use 'vendatta kill my-project-feature-branch' to stop the session
 ```
 
 ### 4. Check Mapped Ports and Services

@@ -131,6 +131,16 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 
 	fmt.Printf("🐳 Creating %s session...\n", cfg.Provider)
 	sessionID := fmt.Sprintf("%s-%s", cfg.Name, branch)
+
+	existingSessions, _ := p.List(ctx)
+	for _, s := range existingSessions {
+		if s.ID == sessionID || s.Labels["oursky.session.id"] == sessionID {
+			fmt.Printf("🧹 Cleaning up existing session %s...\n", s.ID)
+			p.Destroy(ctx, s.ID)
+			break
+		}
+	}
+
 	session, err := p.Create(ctx, sessionID, absWtPath, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
@@ -142,6 +152,19 @@ func (c *BaseController) Dev(ctx context.Context, branch string) error {
 	}
 
 	sessions, _ := p.List(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create session: %w", err)
+	}
+
+	fmt.Println("▶️  Starting session...")
+	if err := p.Start(ctx, session.ID); err != nil {
+		return fmt.Errorf("failed to start session: %w", err)
+	}
+
+	fmt.Println("▶️  Starting session...")
+	if err := p.Start(ctx, session.ID); err != nil {
+		return fmt.Errorf("failed to start session: %w", err)
+	}
 	var activeSession *provider.Session
 	for _, s := range sessions {
 		if s.ID == session.ID || s.Labels["oursky.session.id"] == sessionID {
