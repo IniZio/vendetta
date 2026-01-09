@@ -310,13 +310,13 @@ sync_targets:
 vendatta dev feature-branch
 ```
 
-The command will start the session in the background and exit once ready. Vendatta will show progress as it:
+The command starts the session in the background and exits once setup is complete. Vendatta will show progress as it:
 - Initializes template remotes
 - Merges AI agent templates
-- Sets up Git worktree
-- Generates agent configurations
+- Sets up Git worktree (at `.vendatta/worktrees/<branch>/`)
+- Generates agent configurations in the worktree
 - Creates and starts the container session
-- Maps service ports
+- Maps service ports (services start automatically in the container)
 - Runs setup hooks (if configured)
 
 Example output:
@@ -334,12 +334,14 @@ Example output:
   📍 WEB → http://localhost:3000
 🔧 Running setup hook: .vendatta/hooks/setup.sh
 ✅ Setup hook completed successfully
+🚀 Services starting in background...
 
 🎉 Session my-project-feature-branch is ready!
 📂 Worktree: /path/to/project/.vendatta/worktrees/feature-branch
 💡 Open this directory in your AI agent (Cursor, OpenCode, etc.)
-🔍 Use 'vendatta list' to see active sessions
+🔍 Use 'vendatta list' to see running sessions
 🛑 Use 'vendatta kill my-project-feature-branch' to stop the session
+⏳ Services may take a moment to fully start - check URLs when ready
 ```
 
 ### 4. Check Mapped Ports and Services
@@ -396,12 +398,29 @@ vendatta kill <session-id>
 vendatta list
 ```
 
+### Checking Service Status
+
+Services run inside the container. To check if they're healthy:
+
+```bash
+# Check container logs
+docker logs <container-name>
+
+# Access the running container
+docker exec -it <container-name> /bin/bash
+
+# Check service URLs from the port mappings
+curl http://localhost:<port>/health
+```
+
 ### Troubleshooting
 
-- **Services not starting**: Check `.vendatta/config.yaml` syntax
-- **Ports not mapped**: Ensure services have healthchecks
-- **Agents not connecting**: Verify MCP port (default 3001) is available
+- **Services not starting**: Check `.vendatta/config.yaml` syntax and that commands are correct
+- **Ports not accessible**: Services may still be starting up - wait a moment
+- **Container issues**: Check `docker ps` for running containers
+- **Agents not connecting**: Verify MCP port (default 3001) is available and configs are generated
 - **Git conflicts**: Pull latest changes before `vendatta dev`
+- **Permission issues**: Ensure Docker is accessible and user has proper permissions
 
 ---
 *Powered by OhMyOpenCode.*
