@@ -1,0 +1,201 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Unit tests - fast, no external dependencies
+  unit-test:
+    name: Unit Tests (Go ${{ matrix.go-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.23', '1.24']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=10m
+
+      - name: Run unit tests
+        run: go test -v -race -covermode=atomic -coverprofile=coverage-unit.out ./pkg/...
+
+      - name: Upload unit coverage
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage-unit.out
+          flags: unit
+          name: Unit Tests (Go ${{ matrix.go-version }})
+
+  # Integration tests - require Docker/Testcontainers
+  integration-test:
+    name: Integration Tests (Go ${{ matrix.go-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.23', '1.24']
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run integration tests
+        run: go test -v -race -tags=integration -covermode=atomic -coverprofile=coverage-integration.out ./pkg/...
+
+      - name: Upload integration coverage
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage-integration.out
+          flags: integration
+          name: Integration Tests (Go ${{ matrix.go-version }})
+
+  # E2E tests - full application testing
+  e2e-test:
+    name: E2E Tests (Go ${{ matrix.go-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.23', '1.24']
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build vendatta
+        run: go build -o bin/vendatta cmd/oursky/main.go
+
+      - name: Run E2E tests
+        run: go test -v -race -tags=e2e -covermode=atomic -coverprofile=coverage-e2e.out ./internal/testfixtures/...
+
+      - name: Upload E2E coverage
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage-e2e.out
+          flags: e2e
+          name: E2E Tests (Go ${{ matrix.go-version }})
+
+  # Build verification across platforms
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ['1.23']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build vendatta
+        run: go build -o bin/vendatta cmd/oursky/main.go
+
+      - name: Test build (help command)
+        run: ./bin/vendatta --help
+
+  # Security scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Gosec Security Scanner
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: './...'
+
+  # Performance benchmark
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run benchmarks
+        run: go test -bench=. -benchmem -run=^$ ./pkg/...
+
+  # Release (only on main branch)
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [unit-test, integration-test, e2e-test, build, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

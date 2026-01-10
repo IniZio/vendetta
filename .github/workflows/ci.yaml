@@ -10,27 +10,54 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-      - run: go build -o oursky cmd/oursky/main.go
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+       - run: go build -o oursky cmd/oursky/main.go
 
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-      - run: go test ./...
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+       - run: go test ./...
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+
+       # Set up Docker-in-Docker for e2e tests
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+
+       - name: Start Docker daemon
+         run: |
+           sudo systemctl start docker
+           docker version
+
+       # Build vendatta binary for testing
+       - name: Build vendatta
+         run: go build -o vendatta cmd/oursky/main.go
+
+       # Run e2e tests
+       - name: Run e2e tests
+         run: go test -v ./internal/testfixtures/ -timeout 30m
+         env:
+           DOCKER_HOST: unix:///var/run/docker.sock
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-      - run: go vet ./...
-      - run: go fmt -d . | tee fmt.out && test ! -s fmt.out
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+       - run: go vet ./...
+       - run: go fmt -d . | tee fmt.out && test ! -s fmt.out
