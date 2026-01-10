@@ -191,9 +191,9 @@ func TestVendattaHookSystemAndServiceDiscovery(t *testing.T) {
 provider: docker
 services:
   web:
-    command: "cd client && npm run dev"
+    command: "cd client && PORT=3000 npm run dev"
   api:
-    command: "cd server && npm run dev"
+    command: "cd server && PORT=5000 npm run dev"
   db:
     command: "docker-compose up -d postgres"
 `
