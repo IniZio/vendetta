@@ -202,8 +202,22 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		}
 
 		if cfg.rulesFormat != "" {
-			if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, merged); err != nil {
-				return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
+			agentRulesDir := filepath.Join(".vendatta", "agents", agent.Name)
+			agentMerged := *merged
+			agentMerged.Rules = make(map[string]interface{})
+			for k, v := range merged.Rules {
+				agentMerged.Rules[k] = v
+			}
+
+			manager := templates.NewManager(".vendatta")
+			if err := manager.LoadAgentRules(agentRulesDir, &agentMerged); err == nil {
+				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, &agentMerged); err != nil {
+					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
+				}
+			} else {
+				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, merged); err != nil {
+					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
+				}
 			}
 		}
 

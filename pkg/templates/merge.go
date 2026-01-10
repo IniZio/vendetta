@@ -50,6 +50,14 @@ func (m *Manager) Merge(baseDir string) (*TemplateData, error) {
 	return data, nil
 }
 
+func (m *Manager) LoadAgentRules(dir string, data *TemplateData) error {
+	rulesDir := filepath.Join(dir, "rules")
+	if _, err := os.Stat(rulesDir); os.IsNotExist(err) {
+		return nil
+	}
+	return m.loadTemplateFiles(rulesDir, data.Rules)
+}
+
 func (m *Manager) loadTemplatesFromDir(dir string, data *TemplateData) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		return nil // Directory doesn't exist, skip
