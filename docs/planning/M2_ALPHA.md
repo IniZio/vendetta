@@ -13,10 +13,10 @@
 
 | ID | Title | Priority | Status | Test Plan |
 | :--- | :--- | :--- | :--- | :--- |
-| **PLG-01** | Plugin Registry & DAG Resolver | 🔥 High | [Pending] | [TP-PLG-01](#test-plan-plg-01) |
-| **LCK-01** | Lockfile Manager (uv-style) | 🔥 High | [Pending] | [TP-LCK-01](#test-plan-lck-01) |
-| **CLI-04** | `vendatta plugin` Command Group | ⚡ Med | [Pending] | [TP-CLI-04](#test-plan-cli-04) |
-| **AGT-03** | Namespaced Agent Generation | ⚡ Med | [Pending] | [TP-AGT-03](#test-plan-agt-03) |
+| **PLG-01** | Plugin Registry & DAG Resolver | 🔥 High | [✅ Completed] | [TP-PLG-01](#test-plan-plg-01) |
+| **LCK-01** | Lockfile Manager (uv-style) | 🔥 High | [✅ Completed] | [TP-LCK-01](#test-plan-lck-01) |
+| **CLI-04** | `vendatta plugin` Command Group | ⚡ Med | [✅ Completed] | [TP-CLI-04](#test-plan-cli-04) |
+| **AGT-03** | Namespaced Agent Generation | ⚡ Med | [✅ Completed] | [TP-AGT-03](#test-plan-agt-03) |
 
 ## 📋 Detailed Test Plans
 
