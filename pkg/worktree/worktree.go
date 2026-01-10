@@ -7,19 +7,24 @@ import (
 	"path/filepath"
 )
 
-type Manager struct {
+type Manager interface {
+	Add(branch string) (string, error)
+	Remove(branch string) error
+}
+
+type gitManager struct {
 	RepoPath string
 	BaseDir  string
 }
 
-func NewManager(repoPath string, baseDir string) *Manager {
-	return &Manager{
+func NewManager(repoPath string, baseDir string) Manager {
+	return &gitManager{
 		RepoPath: repoPath,
 		BaseDir:  baseDir,
 	}
 }
 
-func (m *Manager) Add(branch string) (string, error) {
+func (m *gitManager) Add(branch string) (string, error) {
 	wtPath := filepath.Join(m.BaseDir, branch)
 	if _, err := os.Stat(wtPath); err == nil {
 		return wtPath, nil
@@ -66,7 +71,7 @@ func (m *Manager) Add(branch string) (string, error) {
 	return wtPath, nil
 }
 
-func (m *Manager) getCurrentBranch() (string, error) {
+func (m *gitManager) getCurrentBranch() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = m.RepoPath
 	output, err := cmd.Output()
@@ -76,19 +81,19 @@ func (m *Manager) getCurrentBranch() (string, error) {
 	return string(output[:len(output)-1]), nil
 }
 
-func (m *Manager) branchExists(branch string) bool {
+func (m *gitManager) branchExists(branch string) bool {
 	cmd := exec.Command("git", "show-ref", "--verify", "--quiet", "refs/heads/"+branch)
 	cmd.Dir = m.RepoPath
 	return cmd.Run() == nil
 }
 
-func (m *Manager) switchToBranch(branch string) error {
+func (m *gitManager) switchToBranch(branch string) error {
 	cmd := exec.Command("git", "checkout", branch)
 	cmd.Dir = m.RepoPath
 	return cmd.Run()
 }
 
-func (m *Manager) Remove(branch string) error {
+func (m *gitManager) Remove(branch string) error {
 	wtPath := filepath.Join(m.BaseDir, branch)
 
 	cmd := exec.Command("git", "worktree", "remove", branch)
