@@ -136,8 +136,13 @@ func (m *Manager) loadTemplateFiles(dir string, target map[string]interface{}) e
 
 		var templateData map[string]interface{}
 		if isYaml {
-			if err := yaml.Unmarshal(content, &templateData); err != nil {
+			var yamlData map[string]interface{}
+			if err := yaml.Unmarshal(content, &yamlData); err != nil {
 				return fmt.Errorf("failed to parse %s: %w", path, err)
+			}
+			filename := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+			templateData = map[string]interface{}{
+				filename: yamlData,
 			}
 		} else if isMd {
 			data, mdContent := parseMarkdown(content)

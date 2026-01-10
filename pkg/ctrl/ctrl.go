@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/vibegear/oursky/pkg/config"
@@ -29,15 +30,22 @@ type Controller interface {
 }
 
 type BaseController struct {
-	Providers map[string]provider.Provider
+	Providers       map[string]provider.Provider
+	WorktreeManager worktree.Manager
 }
 
-func NewBaseController(providers []provider.Provider) *BaseController {
+func NewBaseController(providers []provider.Provider, wtManager worktree.Manager) *BaseController {
 	pMap := make(map[string]provider.Provider)
 	for _, p := range providers {
 		pMap[p.Name()] = p
 	}
-	return &BaseController{Providers: pMap}
+	if wtManager == nil {
+		wtManager = worktree.NewManager(".", ".vendatta/worktrees")
+	}
+	return &BaseController{
+		Providers:       pMap,
+		WorktreeManager: wtManager,
+	}
 }
 
 func (c *BaseController) Init(ctx context.Context) error {
@@ -121,6 +129,43 @@ wait
 - Ensure type safety.
 `
 	if err := os.WriteFile(".vendatta/agents/rules/base.md", []byte(baseRule), 0644); err != nil {
+		return err
+	}
+
+	agentDirs := []string{
+		".vendatta/agents/cursor",
+		".vendatta/agents/opencode",
+		".vendatta/agents/claude-desktop",
+		".vendatta/agents/claude-code",
+	}
+	for _, dir := range agentDirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
+	}
+
+	cursorTpl := `{
+  "mcpServers": {
+    "oursky": {
+      "command": "vendatta",
+      "args": ["agent", "{{.ProjectName}}"],
+      "port": {{.Port}}
+    }
+  }
+}
+`
+	if err := os.WriteFile(".vendatta/agents/cursor/mcp.json.tpl", []byte(cursorTpl), 0644); err != nil {
+		return err
+	}
+
+	opencodeTpl := `{
+  "name": "{{.ProjectName}}",
+  "mcp": {
+    "port": {{.Port}}
+  }
+}
+`
+	if err := os.WriteFile(".vendatta/agents/opencode/opencode.json.tpl", []byte(opencodeTpl), 0644); err != nil {
 		return err
 	}
 
@@ -214,14 +259,7 @@ func (c *BaseController) WorkspaceCreate(ctx context.Context, name string) error
 	}
 
 	fmt.Println("🌳 Setting up Git worktree...")
-	wtManager := worktree.NewManager(".", ".vendatta/worktrees")
-
-	// Handle branch conflicts
-	if err := c.handleBranchConflicts(name); err != nil {
-		return fmt.Errorf("failed to handle branch conflicts: %w", err)
-	}
-
-	wtPath, err := wtManager.Add(name)
+	wtPath, err := c.WorktreeManager.Add(name)
 	if err != nil {
 		return fmt.Errorf("failed to setup worktree: %w", err)
 	}
@@ -292,17 +330,47 @@ func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 		return fmt.Errorf("failed to get absolute path for worktree: %w", err)
 	}
 
-	// Check if up.sh hook exists - if so, run it instead of default behavior
+	if cfg.Provider != "" {
+		p, ok := c.Providers[cfg.Provider]
+		if !ok {
+			return fmt.Errorf("provider '%s' not found", cfg.Provider)
+		}
+
+		sessionID := fmt.Sprintf("%s-%s", cfg.Name, name)
+		fmt.Printf("🐳 Creating %s session...\n", cfg.Provider)
+		session, err := p.Create(ctx, sessionID, absWtPath, cfg)
+		if err != nil {
+			sessions, _ := p.List(ctx)
+			for _, s := range sessions {
+				if s.ID == sessionID || s.Labels["oursky.session.id"] == sessionID {
+					session = &s
+					break
+				}
+			}
+			if session == nil {
+				return fmt.Errorf("failed to create session: %w", err)
+			}
+		}
+
+		fmt.Println("▶️  Starting session...")
+		if err := p.Start(ctx, session.ID); err != nil {
+			return fmt.Errorf("failed to start session: %w", err)
+		}
+
+		if err := c.setupWorkspaceEnvironment(ctx, session, cfg, p, absWtPath); err != nil {
+			return fmt.Errorf("failed to setup workspace environment: %w", err)
+		}
+	}
+
 	upHookPath := filepath.Join(absWtPath, ".vendatta", "hooks", "up.sh")
 	if _, err := os.Stat(upHookPath); err == nil {
-		fmt.Println("🔧 Running up hook (custom startup)...")
+		fmt.Println("🔧 Running up hook (local startup)...")
 		if err := c.runHook(ctx, upHookPath, cfg, absWtPath); err != nil {
 			return fmt.Errorf("up hook failed: %w", err)
 		}
 		fmt.Println("✅ Up hook completed successfully")
 	} else {
-		fmt.Println("ℹ️  No up.sh hook found - workspace created but not started")
-		fmt.Printf("💡 Create .vendatta/hooks/up.sh to define startup behavior\n")
+		fmt.Println("ℹ️  No up.sh hook found")
 	}
 
 	fmt.Printf("\n🎉 Workspace '%s' is ready!\n", name)
@@ -589,7 +657,7 @@ func (c *BaseController) WorkspaceList(ctx context.Context) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	hasWorkspaces := false
+	activeWorkspaces := make(map[string]provider.Session)
 	for _, p := range c.Providers {
 		sessions, err := p.List(ctx)
 		if err != nil {
@@ -598,14 +666,37 @@ func (c *BaseController) WorkspaceList(ctx context.Context) error {
 
 		for _, s := range sessions {
 			if sessionID, ok := s.Labels["oursky.session.id"]; ok {
-				// Extract workspace name from session ID
 				if strings.HasPrefix(sessionID, cfg.Name+"-") {
 					workspaceName := strings.TrimPrefix(sessionID, cfg.Name+"-")
-					fmt.Printf("  %s (%s) - %s\n", workspaceName, s.Provider, s.Status)
-					hasWorkspaces = true
+					activeWorkspaces[workspaceName] = s
 				}
 			}
 		}
+	}
+
+	worktreesDir := ".vendatta/worktrees"
+	entries, _ := os.ReadDir(worktreesDir)
+	hasWorkspaces := false
+
+	allNames := make(map[string]bool)
+	for name := range activeWorkspaces {
+		allNames[name] = true
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			allNames[entry.Name()] = true
+		}
+	}
+
+	for name := range allNames {
+		status := "created"
+		providerName := "-"
+		if s, ok := activeWorkspaces[name]; ok {
+			status = s.Status
+			providerName = s.Provider
+		}
+		fmt.Printf("  %s (%s) - %s\n", name, providerName, status)
+		hasWorkspaces = true
 	}
 
 	if !hasWorkspaces {
@@ -618,13 +709,17 @@ func (c *BaseController) WorkspaceList(ctx context.Context) error {
 func (c *BaseController) WorkspaceRm(ctx context.Context, name string) error {
 	fmt.Printf("🗑️  Removing workspace '%s'...\n", name)
 
+	worktreePath := filepath.Join(".vendatta", "worktrees", name)
+	if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
+		return fmt.Errorf("workspace '%s' not found", name)
+	}
+
 	if err := c.WorkspaceDown(ctx, name); err != nil {
 		if !strings.Contains(err.Error(), "not found") {
 			return fmt.Errorf("failed to stop workspace: %w", err)
 		}
 	}
-	wtManager := worktree.NewManager(".", ".vendatta/worktrees")
-	if err := wtManager.Remove(name); err != nil {
+	if err := c.WorktreeManager.Remove(name); err != nil {
 		return fmt.Errorf("failed to remove worktree: %w", err)
 	}
 
@@ -671,9 +766,17 @@ func (c *BaseController) Exec(ctx context.Context, sessionID string, cmd []strin
 	return fmt.Errorf("session %s not found", sessionID)
 }
 
-// detectPortFromCommand attempts to detect the port from a service command
 func detectPortFromCommand(command string) int {
-	// Common port patterns in commands
+	re := regexp.MustCompile(`PORT=(\d+)`)
+	matches := re.FindStringSubmatch(command)
+	if len(matches) > 1 {
+		var port int
+		fmt.Sscanf(matches[1], "%d", &port)
+		if port > 0 {
+			return port
+		}
+	}
+
 	portPatterns := []struct {
 		pattern string
 		port    int
@@ -695,7 +798,8 @@ func detectPortFromCommand(command string) int {
 
 	commandLower := strings.ToLower(command)
 	for _, pp := range portPatterns {
-		if strings.Contains(commandLower, strings.ToLower(pp.pattern)) {
+		matched, _ := regexp.MatchString(strings.ToLower(pp.pattern), commandLower)
+		if matched {
 			return pp.port
 		}
 	}

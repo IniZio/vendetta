@@ -233,7 +233,7 @@ func main() {
 		providers = append(providers, dProvider)
 	}
 
-	controller := ctrl.NewBaseController(providers)
+	controller := ctrl.NewBaseController(providers, nil)
 
 	rootCmd := &cobra.Command{
 		Use:   "vendatta",
