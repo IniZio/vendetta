@@ -5,8 +5,15 @@ globs: ["**/*"]
 alwaysApply: true
 ---
 
+# PROJECT KNOWLEDGE BASE
+
+**Generated:** VIBEGEAR-TEST
+
+## project
+
+
 ## OVERVIEW
-Vendatta eliminates the "it works on my machine" problem by providing isolated, reproducible development environments. Built in Go 1.24, it orchestrates Git worktrees, Docker/LXC containers, and AI Agent configurations (Cursor, OpenCode, Claude) via Model Context Protocol (MCP).
+Vendatta (internal codename `oursky`) is a Go-based orchestration tool that manages isolated development environments. It uses Git worktrees for filesystem isolation and Docker/LXC for execution isolation, providing a standardized MCP (Model Context Protocol) gateway for AI agents.
 
 ## STRUCTURE
 ```
@@ -66,11 +73,14 @@ vibegear/
 
 ## COMMANDS
 ```bash
-go run cmd/oursky/main.go init              # Initialize project
-go run cmd/oursky/main.go workspace create  # Create worktree & agent rules
-go run cmd/oursky/main.go workspace up      # Start session & services
 go test ./...                               # Run all tests
+go build -o bin/oursky ./cmd/oursky         # Build binary
+go run cmd/oursky/main.go workspace create  # Test workspace creation
 ```
+
+## CI PIPELINE
+- **GitHub Actions**: Runs tests and linting on every PR.
+- **Releases**: Managed via tags; binary artifacts generated for Linux/Darwin.
 
 ## NOTES
 - **LXC Support**: Under development (see M2 milestone)
