@@ -1,4 +1,6 @@
 {
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"],
   "mcp": {
     "servers": {
       "vibegear": {
