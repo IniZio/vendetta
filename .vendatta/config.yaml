@@ -1,10 +1,23 @@
 name: "vibegear-test"
+provider: docker
+services:
+  test:
+    command: "echo 'Test service running'"
+    port: 8080
 agents:
   - name: "cursor"
     enabled: true
+    plugins: ["base"]
   - name: "opencode"
     enabled: true
+    plugins: ["base"]
+  - name: "claude-desktop"
+    enabled: true
+    plugins: ["base"]
 mcp:
   enabled: true
   port: 3001
   host: "localhost"
+docker:
+  image: ubuntu:22.04
+  dind: true
