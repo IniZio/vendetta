@@ -30,19 +30,22 @@ services:
     depends_on:
       - api
 
+remotes:
+  - url: "https://github.com/IniZio/vendatta-config"
+    branch: "main"
 agents:
   - name: opencode
-    rules: base
     enabled: true
+    plugins: ["core", "node", "docker"]
   - name: cursor
-    rules: base
     enabled: true
+    plugins: ["core", "node", "docker"]
   - name: claude-desktop
-    rules: base
     enabled: true
+    plugins: ["core", "node", "docker"]
   - name: claude-code
-    rules: base
     enabled: true
+    plugins: ["core", "node", "docker"]
 
 mcp:
   enabled: true

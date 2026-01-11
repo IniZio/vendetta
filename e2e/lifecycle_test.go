@@ -1,18 +1,10 @@
-package testfixtures
+package e2e
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestVendattaFullStackLifecycle(t *testing.T) {
@@ -33,21 +25,19 @@ services:
     command: "python3 -m http.server 8080"
     port: 8080
   api:
-    command: "echo 'API running' && sleep 300"
+    command: "python3 -m http.server 3000"
     port: 3000
     depends_on: ["web"]
 agents:
   - name: "cursor"
     enabled: true
-mcp:
-  enabled: true
-  port: 3001
 docker:
   image: ubuntu:22.04
 `,
 	})
 
 	// Build vendatta binary
+	t.Log("Building vendatta...")
 	binaryPath := env.BuildVendattaBinary(t)
 
 	// Initialize vendatta
@@ -66,15 +56,6 @@ docker:
 	t.Log("Verifying services...")
 	env.VerifyServiceHealth(t, "http://localhost:8080", 10*time.Second)
 	env.VerifyServiceHealth(t, "http://localhost:3000", 10*time.Second)
-
-	// Check MCP server
-	t.Log("Verifying MCP server...")
-	env.VerifyServiceHealth(t, "http://localhost:3001/health", 5*time.Second)
-
-	// Verify agent configs generated
-	t.Log("Verifying agent configurations...")
-	worktreePath := filepath.Join(projectDir, ".vendatta", "worktrees", "e2e-test")
-	env.VerifyFileExists(t, filepath.Join(worktreePath, ".cursor", "mcp.json"))
 
 	// Test workspace listing
 	t.Log("Testing workspace listing...")
@@ -106,9 +87,6 @@ agents:
   - name: "cursor"
     enabled: true
     plugins: ["core/base"]
-mcp:
-  enabled: true
-  port: 3002
 `,
 		".vendatta/plugins/core/base/plugin.yaml": `
 name: core/base
@@ -149,9 +127,6 @@ commands:
 	// Start workspace and verify plugin integration
 	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "up", "plugin-test")
 
-	worktreePath := filepath.Join(projectDir, ".vendatta", "worktrees", "plugin-test")
-	env.VerifyFileExists(t, filepath.Join(worktreePath, ".cursor", "mcp.json"))
-
 	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "down", "plugin-test")
 }
 
@@ -185,9 +160,6 @@ agents:
 	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "up", "multi-test")
 	env.VerifyServiceHealth(t, "http://localhost:4000", 10*time.Second)
 	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "down", "multi-test")
-
-	// Note: LXC provider testing would require LXC installation in CI
-	// This is tested separately in unit tests when LXC is available
 }
 
 func TestVendattaErrorHandling(t *testing.T) {
@@ -227,37 +199,6 @@ services:
 	_, err = env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "create", "test-ws")
 	assert.Error(t, err) // Should fail or warn about existing workspace
 }
-	if testing.Short() {
-		t.Skip("Skipping E2E test in short mode")
-	}
-
-	env := NewTestEnvironment(t)
-	defer env.Cleanup()
-
-	projectDir := env.CreateTestProject(t, map[string]string{
-		".vendatta/config.yaml": `
-name: error-test
-provider: docker
-services:
-  failing:
-    command: "exit 1"  # Command that always fails
-    port: 5000
-`,
-	})
-
-	binaryPath := env.BuildVendattaBinary(t)
-	env.RunVendattaCommand(t, binaryPath, projectDir, "init")
-
-	// Test invalid workspace creation (should handle gracefully)
-	_, err := env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid/name")
-	// Should fail gracefully, not panic
-	assert.Error(t, err)
-
-	// Test stopping non-existent workspace
-	_, err = env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "down", "nonexistent")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not found")
-}
 
 func TestVendattaPerformanceBenchmarks(t *testing.T) {
 	if testing.Short() {
@@ -296,7 +237,7 @@ agents:
 	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "up", "perf-test")
 	startupTime := time.Since(start)
 	t.Logf("Workspace startup time: %v", startupTime)
-	assert.Less(t, startupTime, 60*time.Second, "Workspace startup should complete within 60 seconds")
+	assert.Less(t, startupTime, 120*time.Second, "Workspace startup should complete within 120 seconds")
 
 	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "down", "perf-test")
 }

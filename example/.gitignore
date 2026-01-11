@@ -20,3 +20,4 @@ client/dist/
 server/dist/
 # Database
 postgres_data_demo/
+AGENTS.md

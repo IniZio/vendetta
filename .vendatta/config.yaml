@@ -4,16 +4,19 @@ services:
   test:
     command: "echo 'Test service running'"
     port: 8080
+remotes:
+  - url: "https://github.com/IniZio/vendatta-config"
+    branch: "main"
 agents:
   - name: "cursor"
     enabled: true
-    plugins: ["base"]
+    plugins: ["core", "golang", "docker"]
   - name: "opencode"
     enabled: true
-    plugins: ["base"]
+    plugins: ["core", "golang", "docker"]
   - name: "claude-desktop"
     enabled: true
-    plugins: ["base"]
+    plugins: ["core", "golang", "docker"]
 mcp:
   enabled: true
   port: 3001

@@ -29,10 +29,7 @@ services:
     command: "go run main.go"
 agents:
   - name: cursor
-    enabled: true
-mcp:
-  enabled: true
-  port: 3001`,
+    enabled: true`,
 			expected: &Config{
 				Name:     "test-project",
 				Provider: "docker",
@@ -42,14 +39,6 @@ mcp:
 				},
 				Agents: []Agent{
 					{Name: "cursor", Enabled: true},
-				},
-				MCP: struct {
-					Enabled bool   `yaml:"enabled,omitempty"`
-					Port    int    `yaml:"port,omitempty"`
-					Host    string `yaml:"host,omitempty"`
-				}{
-					Enabled: true,
-					Port:    3001,
 				},
 			},
 			wantErr: false,
@@ -133,15 +122,6 @@ func TestConfig_GenerateAgentConfigs(t *testing.T) {
 
 	config := &Config{
 		Name: "test-project",
-		MCP: struct {
-			Enabled bool   `yaml:"enabled,omitempty"`
-			Port    int    `yaml:"port,omitempty"`
-			Host    string `yaml:"host,omitempty"`
-		}{
-			Enabled: true,
-			Port:    3001,
-			Host:    "localhost",
-		},
 		Agents: []Agent{
 			{Name: "cursor", Enabled: true},
 		},
@@ -207,15 +187,6 @@ func TestConfigYAMLMarshalling(t *testing.T) {
 			{Name: "cursor", Enabled: true},
 			{Name: "opencode", Enabled: false},
 		},
-		MCP: struct {
-			Enabled bool   `yaml:"enabled,omitempty"`
-			Port    int    `yaml:"port,omitempty"`
-			Host    string `yaml:"host,omitempty"`
-		}{
-			Enabled: true,
-			Port:    3001,
-			Host:    "localhost",
-		},
 	}
 
 	// Test marshalling
@@ -238,5 +209,4 @@ func TestConfigYAMLMarshalling(t *testing.T) {
 	assert.Equal(t, config.Provider, unmarshalled.Provider)
 	assert.Equal(t, len(config.Services), len(unmarshalled.Services))
 	assert.Equal(t, len(config.Agents), len(unmarshalled.Agents))
-	assert.Equal(t, config.MCP.Port, unmarshalled.MCP.Port)
 }

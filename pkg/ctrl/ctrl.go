@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/vibegear/oursky/pkg/config"
 	"github.com/vibegear/oursky/pkg/provider"
@@ -48,6 +49,11 @@ func NewBaseController(providers []provider.Provider, wtManager worktree.Manager
 	}
 }
 
+func (c *BaseController) Dev(ctx context.Context, branch string) error {
+	// Dev is an alias for WorkspaceCreate for backward compatibility
+	return c.WorkspaceCreate(ctx, branch)
+}
+
 func (c *BaseController) Init(ctx context.Context) error {
 	dirs := []string{
 		".vendatta/hooks",
@@ -75,7 +81,7 @@ docker:
   image: ubuntu:22.04
   dind: true
 hooks:
-  up: .vendatta/hooks/up.sh
+  setup: .vendatta/hooks/up.sh
 `
 	if err := os.WriteFile(".vendatta/config.yaml", []byte(configYaml), 0644); err != nil {
 		return err
@@ -143,44 +149,6 @@ wait
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
 		}
-	}
-
-	cursorTpl := `{
-  "mcpServers": {
-    "oursky": {
-      "command": "vendatta",
-      "args": ["agent", "{{.ProjectName}}"],
-      "port": {{.Port}}
-    }
-  }
-}
-`
-	if err := os.WriteFile(".vendatta/agents/cursor/mcp.json.tpl", []byte(cursorTpl), 0644); err != nil {
-		return err
-	}
-
-	opencodeTpl := `{
-  "name": "{{.ProjectName}}",
-  "mcp": {
-    "port": {{.Port}}
-  }
-}
-`
-	if err := os.WriteFile(".vendatta/agents/opencode/opencode.json.tpl", []byte(opencodeTpl), 0644); err != nil {
-		return err
-	}
-
-	claudeCodeTpl := `{
-  "mcpServers": {
-    "claude-code": {
-      "command": "claudecode",
-      "args": ["--command-timeout", "300", "--allow-path", "{{.ProjectName}}"]
-    }
-  }
-}
-`
-	if err := os.WriteFile(".vendatta/agents/claude-code/claude_code_config.json.tpl", []byte(claudeCodeTpl), 0644); err != nil {
-		return err
 	}
 
 	codexTpl := `{
@@ -319,6 +287,11 @@ func (c *BaseController) WorkspaceCreate(ctx context.Context, name string) error
 		return fmt.Errorf("failed to get absolute path for worktree: %w", err)
 	}
 
+	// Generate up.sh hook based on services
+	if err := c.generateUpHook(absWtPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate up hook: %w", err)
+	}
+
 	// Generate agent configs
 	fmt.Println("🤖 Generating AI agent configurations...")
 	if err := cfg.GenerateAgentConfigs(absWtPath, merged); err != nil {
@@ -381,7 +354,7 @@ func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 			return fmt.Errorf("provider '%s' not found", cfg.Provider)
 		}
 
-		sessionID := fmt.Sprintf("%s-%s", cfg.Name, name)
+		sessionID := fmt.Sprintf("%s-%s-%d", cfg.Name, name, time.Now().Unix())
 		fmt.Printf("🐳 Creating %s session...\n", cfg.Provider)
 		session, err := p.Create(ctx, sessionID, absWtPath, cfg)
 		if err != nil {
@@ -448,6 +421,52 @@ func (c *BaseController) handleBranchConflicts(branchName string) error {
 		}
 	}
 	return nil
+}
+
+func (c *BaseController) generateUpHook(workspacePath string, cfg *config.Config) error {
+	hookDir := filepath.Join(workspacePath, ".vendatta", "hooks")
+	if err := os.MkdirAll(hookDir, 0755); err != nil {
+		return err
+	}
+
+	hookPath := filepath.Join(hookDir, "up.sh")
+
+	upSh := `#!/bin/bash
+# Main startup script - generated from vendatta config
+echo "Starting development environment..."
+
+# Install dependencies if needed
+if ! command -v node &> /dev/null; then
+    echo "Installing Node.js..."
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    apt-get install -y nodejs
+fi
+
+# Install docker-compose if not present
+if ! command -v docker-compose &> /dev/null; then
+    echo "Installing docker-compose..."
+    apt-get update && apt-get install -y docker-compose
+fi
+
+# Start services
+echo "Starting services..."
+`
+
+	for name, svc := range cfg.Services {
+		if svc.Command != "" {
+			upSh += fmt.Sprintf("\n# Start %s service\n", name)
+			upSh += fmt.Sprintf("%s &\n", svc.Command)
+			upSh += fmt.Sprintf("%s_PID=$!\n", strings.ToUpper(name))
+			upSh += fmt.Sprintf("echo \"%s started with PID $%s_PID\"\n", name, strings.ToUpper(name))
+		}
+	}
+
+	upSh += `
+echo "Services starting..."
+echo "Development environment ready."
+`
+
+	return os.WriteFile(hookPath, []byte(upSh), 0755)
 }
 
 func (c *BaseController) runHook(ctx context.Context, hookPath string, cfg *config.Config, workspacePath string) error {

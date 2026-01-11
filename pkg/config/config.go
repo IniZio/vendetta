@@ -55,12 +55,7 @@ type Config struct {
 	Remotes     []TemplateRepo     `yaml:"remotes,omitempty"`
 	SyncTargets []Remote           `yaml:"sync_targets,omitempty"`
 	Agents      []Agent            `yaml:"agents,omitempty"`
-	MCP         struct {
-		Enabled bool   `yaml:"enabled,omitempty"`
-		Port    int    `yaml:"port,omitempty"`
-		Host    string `yaml:"host,omitempty"`
-	} `yaml:"mcp,omitempty"`
-	Docker struct {
+	Docker      struct {
 		Image string   `yaml:"image"`
 		Ports []string `yaml:"ports,omitempty"`
 		DinD  bool     `yaml:"dind,omitempty"`
@@ -108,8 +103,6 @@ func (c *Config) InitializeRemotes(baseDir string) error {
 
 // RenderData holds data for template rendering
 type RenderData struct {
-	Host           string
-	Port           int
 	AuthToken      string
 	ProjectName    string
 	RulesConfig    string // JSON
@@ -165,14 +158,41 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		},
 	}
 
+	// Collect merged data from specified plugins
+	finalRules := make(map[string]interface{})
+	finalSkills := make(map[string]interface{})
+	finalCommands := make(map[string]interface{})
+
+	// Always include "base" and "override" plugins
+	relevantPlugins := []string{"base", "override"}
+	for _, agent := range c.Agents {
+		if agent.Enabled {
+			relevantPlugins = append(relevantPlugins, agent.Plugins...)
+		}
+	}
+
+	if merged != nil {
+		for _, pluginName := range relevantPlugins {
+			if plugin, ok := merged.Plugins[pluginName]; ok {
+				for k, v := range plugin.Rules {
+					finalRules[k] = v
+				}
+				for k, v := range plugin.Skills {
+					finalSkills[k] = v
+				}
+				for k, v := range plugin.Commands {
+					finalCommands[k] = v
+				}
+			}
+		}
+	}
+
 	// Marshal template data to JSON for rendering
-	rulesJSON, _ := json.Marshal(merged.Rules)
-	skillsJSON, _ := json.Marshal(merged.Skills)
-	commandsJSON, _ := json.Marshal(merged.Commands)
+	rulesJSON, _ := json.Marshal(finalRules)
+	skillsJSON, _ := json.Marshal(finalSkills)
+	commandsJSON, _ := json.Marshal(finalCommands)
 
 	renderData := RenderData{
-		Host:           c.MCP.Host,
-		Port:           c.MCP.Port,
 		AuthToken:      generateAuthToken(),
 		ProjectName:    c.Name,
 		RulesConfig:    string(rulesJSON),
@@ -182,8 +202,16 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 
 	var gitignorePatterns []string
 
-	if merged != nil && len(merged.Rules) > 0 {
-		if err := c.generateAgentRules(worktreePath, "agents.md", "", merged); err != nil {
+	if len(finalRules) > 0 {
+		// Create a temporary merged object for generateAgentRules
+		tempMerged := &templates.TemplateData{
+			Plugins: map[string]*templates.PluginData{
+				"merged": {
+					Rules: finalRules,
+				},
+			},
+		}
+		if err := c.generateAgentRules(worktreePath, "agents.md", "", tempMerged); err != nil {
 			return fmt.Errorf("failed to generate AGENTS.md: %w", err)
 		}
 		gitignorePatterns = append(gitignorePatterns, "AGENTS.md")
@@ -225,26 +253,26 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		}
 
 		if cfg.rulesFormat != "" {
-			agentMerged := &templates.TemplateData{
-				Rules: make(map[string]interface{}),
-			}
+			agentRules := make(map[string]interface{})
 
-			// Merge rules from specified plugins
-			for _, pluginName := range agent.Plugins {
+			// Merge rules from specified plugins for this specific agent
+			agentPluginNames := append([]string{"base", "override"}, agent.Plugins...)
+			for _, pluginName := range agentPluginNames {
 				if merged == nil {
 					continue
 				}
-				for ruleName, ruleData := range merged.Rules {
-					// Namespace plugin rules to avoid collisions
-					namespacedName := pluginName + "/" + ruleName
-					agentMerged.Rules[namespacedName] = ruleData
+				if plugin, ok := merged.Plugins[pluginName]; ok {
+					for ruleName, ruleData := range plugin.Rules {
+						// Namespace plugin rules to avoid collisions
+						namespacedName := pluginName + "/" + ruleName
+						agentRules[namespacedName] = ruleData
+					}
 				}
 			}
 
 			// Load agent-specific rules from override directory
 			agentOverrideDir := filepath.Join(".vendatta", "agents", agent.Name, "rules")
 			if _, err := os.Stat(agentOverrideDir); err == nil {
-				// Load rules from agent-specific override directory
 				if err := filepath.Walk(agentOverrideDir, func(path string, info os.FileInfo, err error) error {
 					if err != nil {
 						return err
@@ -258,7 +286,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 							return err
 						}
 
-						agentMerged.Rules[ruleName] = map[string]interface{}{
+						agentRules[ruleName] = map[string]interface{}{
 							"content": string(content),
 						}
 					}
@@ -269,8 +297,15 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			}
 
 			// Generate agent-specific rules if any were collected
-			if len(agentMerged.Rules) > 0 {
-				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, agentMerged); err != nil {
+			if len(agentRules) > 0 {
+				tempAgentMerged := &templates.TemplateData{
+					Plugins: map[string]*templates.PluginData{
+						"agent": {
+							Rules: agentRules,
+						},
+					},
+				}
+				if err := c.generateAgentRules(worktreePath, cfg.rulesFormat, cfg.rulesDir, tempAgentMerged); err != nil {
 					return fmt.Errorf("failed to generate rules for %s: %w", agent.Name, err)
 				}
 			}
@@ -288,7 +323,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 }
 
 func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merged *templates.TemplateData) error {
-	if merged == nil || len(merged.Rules) == 0 {
+	if merged == nil || len(merged.Plugins) == 0 {
 		return nil
 	}
 
@@ -305,27 +340,32 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 		if format == "md" {
 			extension = ".md"
 		}
-		for name, data := range merged.Rules {
-			ruleMap, ok := data.(map[string]interface{})
-			if !ok {
-				continue
-			}
-			content, _ := ruleMap["content"].(string)
-
-			var builder strings.Builder
-			builder.WriteString("---\n")
-			for k, v := range ruleMap {
-				if k == "content" {
+		for _, plugin := range merged.Plugins {
+			for name, data := range plugin.Rules {
+				ruleMap, ok := data.(map[string]interface{})
+				if !ok {
 					continue
 				}
-				builder.WriteString(fmt.Sprintf("%s: %v\n", k, v))
-			}
-			builder.WriteString("---\n")
-			builder.WriteString(content)
+				content, _ := ruleMap["content"].(string)
 
-			outputPath := filepath.Join(absRulesDir, name+extension)
-			if err := os.WriteFile(outputPath, []byte(builder.String()), 0644); err != nil {
-				return err
+				var builder strings.Builder
+				builder.WriteString("---\n")
+				for k, v := range ruleMap {
+					if k == "content" {
+						continue
+					}
+					builder.WriteString(fmt.Sprintf("%s: %v\n", k, v))
+				}
+				builder.WriteString("---\n")
+				builder.WriteString(content)
+
+				outputPath := filepath.Join(absRulesDir, name+extension)
+				if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+					return err
+				}
+				if err := os.WriteFile(outputPath, []byte(builder.String()), 0644); err != nil {
+					return err
+				}
 			}
 		}
 	case "agents.md":
@@ -333,14 +373,16 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 		builder.WriteString("# PROJECT KNOWLEDGE BASE\n\n")
 		builder.WriteString(fmt.Sprintf("**Generated:** %s\n", strings.ToUpper(c.Name)))
 		builder.WriteString("\n")
-		for _, data := range merged.Rules {
-			ruleMap, ok := data.(map[string]interface{})
-			if !ok {
-				continue
+		for _, plugin := range merged.Plugins {
+			for _, data := range plugin.Rules {
+				ruleMap, ok := data.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				content, _ := ruleMap["content"].(string)
+				builder.WriteString(content)
+				builder.WriteString("\n\n")
 			}
-			content, _ := ruleMap["content"].(string)
-			builder.WriteString(content)
-			builder.WriteString("\n\n")
 		}
 		outputPath := filepath.Join(worktreePath, "AGENTS.md")
 		if err := os.WriteFile(outputPath, []byte(builder.String()), 0644); err != nil {
@@ -543,27 +585,6 @@ func GenerateJSONSchema() (string, error) {
 					"required":             []string{"name"},
 					"additionalProperties": false,
 				},
-			},
-			"mcp": map[string]interface{}{
-				"type":        "object",
-				"description": "Model Context Protocol configuration",
-				"properties": map[string]interface{}{
-					"enabled": map[string]interface{}{
-						"type":        "boolean",
-						"description": "Whether MCP server is enabled",
-					},
-					"port": map[string]interface{}{
-						"type":        "integer",
-						"description": "MCP server port",
-						"minimum":     1,
-						"maximum":     65535,
-					},
-					"host": map[string]interface{}{
-						"type":        "string",
-						"description": "MCP server host",
-					},
-				},
-				"additionalProperties": false,
 			},
 			"docker": map[string]interface{}{
 				"type":        "object",

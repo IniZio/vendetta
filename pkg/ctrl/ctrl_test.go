@@ -169,9 +169,7 @@ func TestBaseController_WorkspaceCreate(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(oldCwd)
 
-	os.MkdirAll(".vendatta/agents/cursor", 0755)
 	os.WriteFile(".vendatta/config.yaml", []byte("name: test-project\nagents:\n  - name: cursor\n    enabled: true"), 0644)
-	os.WriteFile(".vendatta/agents/cursor/mcp.json.tpl", []byte(`{"name": "{{.ProjectName}}"}`), 0644)
 	os.WriteFile(".gitignore", []byte("node_modules\n"), 0644)
 
 	wtPath := filepath.Join(tempDir, "worktree-1")
@@ -181,10 +179,6 @@ func TestBaseController_WorkspaceCreate(t *testing.T) {
 	err = ctrl.WorkspaceCreate(context.Background(), "test-workspace")
 
 	assert.NoError(t, err)
-	assert.FileExists(t, filepath.Join(wtPath, ".cursor/mcp.json"))
-
-	content, _ := os.ReadFile(filepath.Join(wtPath, ".cursor/mcp.json"))
-	assert.Contains(t, string(content), "test-project")
 
 	mockWT.AssertExpectations(t)
 }

@@ -6,7 +6,7 @@ Vendatta eliminates the "it works on my machine" problem by providing isolated, 
 
 - **Single Binary**: Zero-setup installation with no host dependencies
 - **Branch Isolation**: Git worktrees provide unique filesystems for every branch
-- **AI Agent Integration**: Automatic configuration for Cursor, OpenCode, Claude, and more via Model Context Protocol (MCP)
+- **AI Agent Integration**: Automatic configuration for Cursor, OpenCode, Claude, and more
 - **Service Discovery**: Automatic port mapping and environment variables for multi-service apps
 - **Docker-in-Docker**: Run docker-compose projects inside isolated environments
 
@@ -152,11 +152,6 @@ agents:
     enabled: true
   - name: "opencode"
     enabled: true
-
-# MCP server settings
-mcp:
-  enabled: true
-  port: 3001
 ```
 
 ### Customizing Templates
@@ -206,16 +201,7 @@ applies_to: ["**/*.ts", "**/*.js"]
 Use variables for dynamic configuration:
 
 ```yaml
-# In config.yaml
-mcp:
-  port: "{{.Env.MCP_PORT}}"
-```
 
-```bash
-export MCP_PORT=3001
-vendatta workspace create my-branch
-vendatta workspace up my-branch
-```
 
 ### Service Discovery & Port Access
 
@@ -397,16 +383,7 @@ env | grep OURSKY_SERVICE
 - **Web App**: Open `OURSKY_SERVICE_WEB_URL` in browser
 - **AI Agents**: Open worktree in Cursor/OpenCode, agents connect automatically
 
-### 6. Use MCP Agent Gateway
-
-For direct AI agent integration:
-
-```bash
-# Start MCP server for a specific session
-vendatta agent <session-id>
-```
-
-### 7. Sync Configurations
+### 6. Sync Configurations
 
 Push your `.vendatta` configs to remote targets:
 
@@ -418,7 +395,7 @@ vendatta config sync backup
 vendatta config sync-all
 ```
 
-### 8. Clean Up
+### 7. Clean Up
 
 ```bash
 # Stop a specific workspace
@@ -451,7 +428,7 @@ curl http://localhost:<port>/health
 - **Services not starting**: Check `.vendatta/config.yaml` syntax and that commands are correct
 - **Ports not accessible**: Services may still be starting up - wait a moment
 - **Container issues**: Check `docker ps` for running containers
-- **Agents not connecting**: Verify MCP port (default 3001) is available and configs are generated
+- **Agents not connecting**: Verify agent configs are generated in worktree
 - **Git conflicts**: Pull latest changes before `vendatta workspace create`
 - **Permission issues**: Ensure Docker is accessible and user has proper permissions
 

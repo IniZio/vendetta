@@ -10,7 +10,7 @@ This directory contains a complete working example of an Oursky-configured proje
 - **Frontend**: Vite + React application
 
 ### AI Agent Support
-- **Cursor**: `.cursor/mcp.json` for VS Code integration
+- **Cursor**: Agent configuration for VS Code integration
 - **OpenCode**: `opencode.json` + `.opencode/` directory
 - **Claude**: Desktop and Code configurations
 
@@ -104,17 +104,10 @@ netstat -tlnp | grep :3000
 ```
 
 ### Agent Not Connecting
-Verify MCP server is running:
-```bash
-curl http://localhost:3001/health
-```
+Check generated agent configs in the worktree.
 
 ### Configuration Issues
-Check generated configs:
-```bash
-cat .cursor/mcp.json
-cat opencode.json
-```
+Check generated configs in `.vendatta/worktrees/<branch>/`
 
 ## Learn More
 
