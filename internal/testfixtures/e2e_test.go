@@ -66,6 +66,8 @@ server.listen(3000, '0.0.0.0', () => {
 	te.runCommandInDir(te.gitRepoDir, "git", "add", ".")
 	te.runCommandInDir(te.gitRepoDir, "git", "commit", "-m", "Initial commit")
 
+	te.runCommandInDir(te.gitRepoDir, "git", "branch", "-M", "main")
+
 	// Create test branches
 	te.runCommandInDir(te.gitRepoDir, "git", "checkout", "-b", "feature-1")
 	te.createFile(filepath.Join(te.gitRepoDir, "feature1.txt"), "Feature 1 content")

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -164,12 +165,19 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		},
 	}
 
+	// Marshal template data to JSON for rendering
+	rulesJSON, _ := json.Marshal(merged.Rules)
+	skillsJSON, _ := json.Marshal(merged.Skills)
+	commandsJSON, _ := json.Marshal(merged.Commands)
+
 	renderData := RenderData{
-		Host:        c.MCP.Host,
-		Port:        c.MCP.Port,
-		AuthToken:   generateAuthToken(),
-		ProjectName: c.Name,
-		// TODO: populate RulesConfig, etc. as JSON
+		Host:           c.MCP.Host,
+		Port:           c.MCP.Port,
+		AuthToken:      generateAuthToken(),
+		ProjectName:    c.Name,
+		RulesConfig:    string(rulesJSON),
+		SkillsConfig:   string(skillsJSON),
+		CommandsConfig: string(commandsJSON),
 	}
 
 	var gitignorePatterns []string
@@ -381,4 +389,240 @@ func updateGitignore(patterns []string) error {
 	// Write back
 	newContent := strings.Join(existing, "\n") + "\n"
 	return os.WriteFile(gitignorePath, []byte(newContent), 0644)
+}
+
+// GenerateJSONSchema generates a JSON schema for the Config struct
+func GenerateJSONSchema() (string, error) {
+	schema := map[string]interface{}{
+		"$schema": "https://json-schema.org/draft/2020-12/schema",
+		"type":    "object",
+		"properties": map[string]interface{}{
+			"name": map[string]interface{}{
+				"type":        "string",
+				"description": "Project name",
+			},
+			"provider": map[string]interface{}{
+				"type":        "string",
+				"description": "Execution provider (docker, lxc)",
+				"enum":        []string{"docker", "lxc"},
+			},
+			"services": map[string]interface{}{
+				"type":        "object",
+				"description": "Service definitions",
+				"patternProperties": map[string]interface{}{
+					".*": map[string]interface{}{
+						"type": "object",
+						"properties": map[string]interface{}{
+							"command": map[string]interface{}{
+								"type":        "string",
+								"description": "Command to run the service",
+							},
+							"port": map[string]interface{}{
+								"type":        "integer",
+								"description": "Legacy port configuration (auto-detected from command)",
+								"minimum":     1,
+								"maximum":     65535,
+							},
+							"healthcheck": map[string]interface{}{
+								"type": "object",
+								"properties": map[string]interface{}{
+									"url": map[string]interface{}{
+										"type":        "string",
+										"description": "Health check URL",
+									},
+									"interval": map[string]interface{}{
+										"type":        "string",
+										"description": "Health check interval",
+									},
+									"timeout": map[string]interface{}{
+										"type":        "string",
+										"description": "Health check timeout",
+									},
+									"retries": map[string]interface{}{
+										"type":        "integer",
+										"description": "Number of retries",
+										"minimum":     0,
+									},
+								},
+								"additionalProperties": false,
+							},
+							"depends_on": map[string]interface{}{
+								"type":        "array",
+								"items":       map[string]interface{}{"type": "string"},
+								"description": "Services this service depends on",
+							},
+							"env": map[string]interface{}{
+								"type":        "object",
+								"description": "Environment variables",
+								"patternProperties": map[string]interface{}{
+									".*": map[string]interface{}{"type": "string"},
+								},
+							},
+						},
+						"additionalProperties": false,
+					},
+				},
+			},
+			"remotes": map[string]interface{}{
+				"type":        "array",
+				"description": "Remote template repositories",
+				"items": map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"url": map[string]interface{}{
+							"type":        "string",
+							"description": "Repository URL",
+						},
+						"branch": map[string]interface{}{
+							"type":        "string",
+							"description": "Branch to pull from",
+						},
+						"path": map[string]interface{}{
+							"type":        "string",
+							"description": "Path within repository",
+						},
+					},
+					"required":             []string{"url"},
+					"additionalProperties": false,
+				},
+			},
+			"sync_targets": map[string]interface{}{
+				"type":        "array",
+				"description": "Remote repositories for config syncing",
+				"items": map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"name": map[string]interface{}{
+							"type":        "string",
+							"description": "Target name",
+						},
+						"url": map[string]interface{}{
+							"type":        "string",
+							"description": "Repository URL",
+						},
+					},
+					"required":             []string{"name", "url"},
+					"additionalProperties": false,
+				},
+			},
+			"agents": map[string]interface{}{
+				"type":        "array",
+				"description": "AI agent configurations",
+				"items": map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"name": map[string]interface{}{
+							"type":        "string",
+							"description": "Agent name (cursor, opencode, claude-desktop, etc.)",
+							"enum":        []string{"cursor", "opencode", "claude-desktop", "claude-code", "codex"},
+						},
+						"enabled": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Whether this agent is enabled",
+						},
+						"rules": map[string]interface{}{
+							"type":        "string",
+							"description": "Path to rules file",
+						},
+						"skills": map[string]interface{}{
+							"type":        "array",
+							"items":       map[string]interface{}{"type": "string"},
+							"description": "List of skills to enable",
+						},
+						"commands": map[string]interface{}{
+							"type":        "array",
+							"items":       map[string]interface{}{"type": "string"},
+							"description": "List of commands to enable",
+						},
+						"plugins": map[string]interface{}{
+							"type":        "array",
+							"items":       map[string]interface{}{"type": "string"},
+							"description": "Plugin namespaces to include",
+						},
+					},
+					"required":             []string{"name"},
+					"additionalProperties": false,
+				},
+			},
+			"mcp": map[string]interface{}{
+				"type":        "object",
+				"description": "Model Context Protocol configuration",
+				"properties": map[string]interface{}{
+					"enabled": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether MCP server is enabled",
+					},
+					"port": map[string]interface{}{
+						"type":        "integer",
+						"description": "MCP server port",
+						"minimum":     1,
+						"maximum":     65535,
+					},
+					"host": map[string]interface{}{
+						"type":        "string",
+						"description": "MCP server host",
+					},
+				},
+				"additionalProperties": false,
+			},
+			"docker": map[string]interface{}{
+				"type":        "object",
+				"description": "Docker provider configuration",
+				"properties": map[string]interface{}{
+					"image": map[string]interface{}{
+						"type":        "string",
+						"description": "Docker image to use",
+					},
+					"ports": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "Port mappings",
+					},
+					"dind": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Enable Docker-in-Docker",
+					},
+				},
+				"additionalProperties": false,
+			},
+			"lxc": map[string]interface{}{
+				"type":        "object",
+				"description": "LXC provider configuration",
+				"properties": map[string]interface{}{
+					"image": map[string]interface{}{
+						"type":        "string",
+						"description": "LXC image to use",
+					},
+				},
+				"additionalProperties": false,
+			},
+			"hooks": map[string]interface{}{
+				"type":        "object",
+				"description": "Lifecycle hooks",
+				"properties": map[string]interface{}{
+					"setup": map[string]interface{}{
+						"type":        "string",
+						"description": "Setup hook script path",
+					},
+					"dev": map[string]interface{}{
+						"type":        "string",
+						"description": "Development hook script path",
+					},
+					"teardown": map[string]interface{}{
+						"type":        "string",
+						"description": "Teardown hook script path",
+					},
+				},
+				"additionalProperties": false,
+			},
+		},
+		"additionalProperties": false,
+	}
+
+	schemaBytes, err := json.MarshalIndent(schema, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal schema: %w", err)
+	}
+
+	return string(schemaBytes), nil
 }

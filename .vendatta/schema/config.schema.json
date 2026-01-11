@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "agents": {
+      "description": "AI agent configurations",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "commands": {
+            "description": "List of commands to enable",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "enabled": {
+            "description": "Whether this agent is enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Agent name (cursor, opencode, claude-desktop, etc.)",
+            "enum": [
+              "cursor",
+              "opencode",
+              "claude-desktop",
+              "claude-code",
+              "codex"
+            ],
+            "type": "string"
+          },
+          "plugins": {
+            "description": "Plugin namespaces to include",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rules": {
+            "description": "Path to rules file",
+            "type": "string"
+          },
+          "skills": {
+            "description": "List of skills to enable",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "docker": {
+      "additionalProperties": false,
+      "description": "Docker provider configuration",
+      "properties": {
+        "dind": {
+          "description": "Enable Docker-in-Docker",
+          "type": "boolean"
+        },
+        "image": {
+          "description": "Docker image to use",
+          "type": "string"
+        },
+        "ports": {
+          "description": "Port mappings",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "hooks": {
+      "additionalProperties": false,
+      "description": "Lifecycle hooks",
+      "properties": {
+        "dev": {
+          "description": "Development hook script path",
+          "type": "string"
+        },
+        "setup": {
+          "description": "Setup hook script path",
+          "type": "string"
+        },
+        "teardown": {
+          "description": "Teardown hook script path",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "lxc": {
+      "additionalProperties": false,
+      "description": "LXC provider configuration",
+      "properties": {
+        "image": {
+          "description": "LXC image to use",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "mcp": {
+      "additionalProperties": false,
+      "description": "Model Context Protocol configuration",
+      "properties": {
+        "enabled": {
+          "description": "Whether MCP server is enabled",
+          "type": "boolean"
+        },
+        "host": {
+          "description": "MCP server host",
+          "type": "string"
+        },
+        "port": {
+          "description": "MCP server port",
+          "maximum": 65535,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "name": {
+      "description": "Project name",
+      "type": "string"
+    },
+    "provider": {
+      "description": "Execution provider (docker, lxc)",
+      "enum": [
+        "docker",
+        "lxc"
+      ],
+      "type": "string"
+    },
+    "remotes": {
+      "description": "Remote template repositories",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "branch": {
+            "description": "Branch to pull from",
+            "type": "string"
+          },
+          "path": {
+            "description": "Path within repository",
+            "type": "string"
+          },
+          "url": {
+            "description": "Repository URL",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "services": {
+      "description": "Service definitions",
+      "patternProperties": {
+        ".*": {
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "description": "Command to run the service",
+              "type": "string"
+            },
+            "depends_on": {
+              "description": "Services this service depends on",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "env": {
+              "description": "Environment variables",
+              "patternProperties": {
+                ".*": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "healthcheck": {
+              "additionalProperties": false,
+              "properties": {
+                "interval": {
+                  "description": "Health check interval",
+                  "type": "string"
+                },
+                "retries": {
+                  "description": "Number of retries",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "timeout": {
+                  "description": "Health check timeout",
+                  "type": "string"
+                },
+                "url": {
+                  "description": "Health check URL",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "port": {
+              "description": "Legacy port configuration (auto-detected from command)",
+              "maximum": 65535,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "sync_targets": {
+      "description": "Remote repositories for config syncing",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "Target name",
+            "type": "string"
+          },
+          "url": {
+            "description": "Repository URL",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "url"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "type": "object"
+}

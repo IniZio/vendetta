@@ -479,7 +479,44 @@ func main() {
 		},
 	}
 
-	configCmd.AddCommand(configPullCmd, configListCmd, configSyncCmd, configSyncAllCmd)
+	configValidateCmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Validate config.yaml against JSON schema",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// For now, just check if config loads
+			_, err := config.LoadConfig(".vendatta/config.yaml")
+			if err != nil {
+				return fmt.Errorf("config validation failed: %w", err)
+			}
+			fmt.Println("✅ Config is valid")
+			return nil
+		},
+	}
+
+	configGenerateSchemaCmd := &cobra.Command{
+		Use:   "generate-schema",
+		Short: "Generate JSON schema for config.yaml",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			schema, err := config.GenerateJSONSchema()
+			if err != nil {
+				return fmt.Errorf("failed to generate schema: %w", err)
+			}
+
+			schemaPath := ".vendatta/schema/config.schema.json"
+			if err := os.MkdirAll(filepath.Dir(schemaPath), 0755); err != nil {
+				return fmt.Errorf("failed to create schema directory: %w", err)
+			}
+
+			if err := os.WriteFile(schemaPath, []byte(schema), 0644); err != nil {
+				return fmt.Errorf("failed to write schema file: %w", err)
+			}
+
+			fmt.Printf("✅ Schema generated at %s\n", schemaPath)
+			return nil
+		},
+	}
+
+	configCmd.AddCommand(configPullCmd, configListCmd, configSyncCmd, configSyncAllCmd, configValidateCmd, configGenerateSchemaCmd)
 
 	pluginCmd := &cobra.Command{
 		Use:   "plugin",

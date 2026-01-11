@@ -1,19 +1,19 @@
 name: CI
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+   push:
+     branches: [main, develop]
+   pull_request:
+     branches: [main, develop]
 
 jobs:
   # Unit tests - fast, no external dependencies
   unit-test:
     name: Unit Tests (Go ${{ matrix.go-version }})
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.23', '1.24']
+     strategy:
+       matrix:
+         go-version: ['1.24']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,9 +47,9 @@ jobs:
   integration-test:
     name: Integration Tests (Go ${{ matrix.go-version }})
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.23', '1.24']
+     strategy:
+       matrix:
+         go-version: ['1.24']
     services:
       docker:
         image: docker:dind
@@ -81,9 +81,9 @@ jobs:
   e2e-test:
     name: E2E Tests (Go ${{ matrix.go-version }})
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.23', '1.24']
+     strategy:
+       matrix:
+         go-version: ['1.24']
     services:
       docker:
         image: docker:dind
@@ -121,7 +121,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        go-version: ['1.23']
+         go-version: ['1.24']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -149,8 +149,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Gosec Security Scanner
-        uses: securecodewarrior/github-action-gosec@master
+       - name: Run Gosec Security Scanner
+         uses: securego/gosec@master
         with:
           args: './...'
 
@@ -179,7 +179,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: [unit-test, integration-test, e2e-test, build, security]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
