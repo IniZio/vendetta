@@ -2,6 +2,21 @@
 
 ## 1. Project Configuration (`.vendatta/config.yaml`)
 
+Vendatta uses a declarative YAML configuration system with full JSON schema validation and IDE support.
+
+### Schema Validation
+- **Auto-generated schema**: JSON schema is automatically generated from Go structs
+- **IDE integration**: VSCode, Cursor, and other editors provide autocomplete and validation
+- **Validation commands**:
+  ```bash
+  vendatta config generate-schema  # Generate .vendatta/schema/config.schema.json
+  vendatta config validate         # Validate current config.yaml
+  ```
+
+### Schema Location
+- **Schema file**: `.vendatta/schema/config.schema.json`
+- **Auto-generated**: Updated automatically when config structs change
+
 ```yaml
 name: project-name
 provider: docker

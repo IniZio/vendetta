@@ -124,5 +124,5 @@ Generated configs connect all agents to the MCP gateway with appropriate authent
 - ✅ Template merging from multiple sources (base, remotes, agents)
 - ✅ Agent config file generation during `dev` command
 - ✅ Support for Cursor, OpenCode, Claude Desktop/Code
-- 🚧 TODO: Populate RulesConfig, SkillsConfig, CommandsConfig as JSON
+- ✅ Populate RulesConfig, SkillsConfig, CommandsConfig as JSON
 - 🚧 TODO: Implement authentication token generation
