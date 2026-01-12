@@ -404,6 +404,8 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 					continue
 				}
 				content, _ := ruleMap["content"].(string)
+				// Strip any existing frontmatter delimiters from content
+				content = stripFrontmatter(content)
 
 				var builder strings.Builder
 				builder.WriteString("---\n")
@@ -447,6 +449,19 @@ func (c *Config) generateAgentRules(worktreePath, format, rulesDir string, merge
 		}
 	}
 	return nil
+}
+
+// stripFrontmatter removes YAML frontmatter delimiters from markdown content
+func stripFrontmatter(content string) string {
+	if !strings.HasPrefix(content, "---\n") && !strings.HasPrefix(content, "---\r\n") {
+		return content
+	}
+	// Find the closing ---
+	idx := strings.Index(content[4:], "\n---")
+	if idx == -1 {
+		return content
+	}
+	return content[idx+5:]
 }
 
 // generateAuthToken creates a random 32-character hex token
