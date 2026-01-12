@@ -487,6 +487,32 @@ wait
 		return err
 	}
 
+	claudeDesktopTpl := `{
+  "mcpServers": {
+    "vendatta": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything", "{{.ProjectName}}"]
+    }
+  }
+}
+`
+	if err := os.WriteFile(".vendatta/agents/claude-desktop/claude_desktop_config.json.tpl", []byte(claudeDesktopTpl), 0644); err != nil {
+		return err
+	}
+
+	claudeCodeTpl := `{
+  "mcpServers": {
+    "vendatta": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything", "{{.ProjectName}}"]
+    }
+  }
+}
+`
+	if err := os.WriteFile(".vendatta/agents/claude-code/claude_code_config.json.tpl", []byte(claudeCodeTpl), 0644); err != nil {
+		return err
+	}
+
 	return nil
 }
 
