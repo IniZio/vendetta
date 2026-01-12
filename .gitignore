@@ -15,6 +15,7 @@ node_modules/
 claude_desktop_config.json
 claude_code_config.json
 opencode.json
+vendatta.lock
 # IDE
 .vscode/
 .idea/
