@@ -6,9 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
-
-	"gopkg.in/yaml.v3"
 )
 
 // TemplateData represents the merged template data
@@ -80,26 +77,40 @@ func (m *Manager) loadExtends(baseDir string, extends []string, data *TemplateDa
 	return nil
 }
 
-func (m *Manager) loadPluginManifest(path string) (*PluginManifest, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var manifest PluginManifest
-	err = yaml.Unmarshal(data, &manifest)
-	return &manifest, err
+// Stub implementations for missing methods - TODO: implement properly
+func (m *Manager) loadTemplateRepos(templateReposDir string, data *TemplateData) error {
+	// Stub implementation
+	return nil
 }
 
-func (m *Manager) checkPluginConditions(projectRoot string, manifest *PluginManifest) bool {
-	if len(manifest.Conditions) == 0 {
-		return true // No conditions, always enabled
+func (m *Manager) loadPluginTemplates(pluginsDir, projectRoot string, data *TemplateData) error {
+	// Stub implementation
+	return nil
+}
+
+func (m *Manager) getOrCreatePlugin(data *TemplateData, name string) *PluginData {
+	// Stub implementation
+	if data.Plugins == nil {
+		data.Plugins = make(map[string]*PluginData)
 	}
-	for _, cond := range manifest.Conditions {
-		if _, err := os.Stat(filepath.Join(projectRoot, cond.File)); err == nil {
-			return true // At least one condition met
+	if data.Plugins[name] == nil {
+		data.Plugins[name] = &PluginData{
+			Skills:   make(map[string]interface{}),
+			Rules:    make(map[string]interface{}),
+			Commands: make(map[string]interface{}),
 		}
 	}
-	return false
+	return data.Plugins[name]
+}
+
+func (m *Manager) loadTemplatesFromDir(dir string, plugin *PluginData) error {
+	// Stub implementation
+	return nil
+}
+
+func parseMarkdown(content []byte) (map[string]interface{}, string) {
+	// Stub implementation - return empty frontmatter and content as string
+	return make(map[string]interface{}), string(content)
 }
 
 func (m *Manager) applyAgentOverrides(agentsDir string, data *TemplateData) error {

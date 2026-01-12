@@ -213,11 +213,10 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			rulesDir:     ".github/instructions",
 		},
 		"cursor": {
-			templatePath: ".vendatta/agents/cursor/mcp.json.tpl",
-			outputPath:   ".cursor/mcp.json",
-			gitignore:    ".cursor/",
-			rulesFormat:  "mdc",
-			rulesDir:     ".cursor/rules",
+			// MCP removed - cursor only generates rules now
+			gitignore:   ".cursor/",
+			rulesFormat: "mdc",
+			rulesDir:    ".cursor/rules",
 		},
 	}
 

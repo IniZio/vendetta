@@ -2,15 +2,19 @@ package ctrl
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/vibegear/vendatta/pkg/config"
+	"github.com/vibegear/vendatta/pkg/lock"
 	"github.com/vibegear/vendatta/pkg/provider"
 	"github.com/vibegear/vendatta/pkg/worktree"
 )
@@ -35,6 +39,7 @@ type Controller interface {
 type BaseController struct {
 	Providers       map[string]provider.Provider
 	WorktreeManager worktree.Manager
+	LockManager     *lock.Manager
 }
 
 func NewBaseController(providers []provider.Provider, wtManager worktree.Manager) *BaseController {
@@ -48,6 +53,7 @@ func NewBaseController(providers []provider.Provider, wtManager worktree.Manager
 	return &BaseController{
 		Providers:       pMap,
 		WorktreeManager: wtManager,
+		LockManager:     lock.NewManager("."),
 	}
 }
 
@@ -467,31 +473,8 @@ wait
 		return err
 	}
 
-	cursorTpl := `{
-  "mcpServers": {
-    "{{.ProjectName}}": {
-      "type": "http",
-      "url": "http://localhost:3001",
-      "headers": {
-        "Authorization": "Bearer {{.AuthToken}}"
-      }
-    }
-  }
-}
-`
-	if err := os.WriteFile(".vendatta/agents/cursor/mcp.json.tpl", []byte(cursorTpl), 0644); err != nil {
-		return err
-	}
-
 	opencodeTpl := `{
   "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "{{.ProjectName}}": {
-      "type": "remote",
-      "url": "http://localhost:3001",
-      "enabled": true
-    }
-  },
   "instructions": [
     "AGENTS.md",
     ".opencode/rules/*.md",
@@ -501,25 +484,6 @@ wait
 }
 `
 	if err := os.WriteFile(".vendatta/agents/opencode/opencode.json.tpl", []byte(opencodeTpl), 0644); err != nil {
-		return err
-	}
-
-	claudeTpl := `{
-  "mcpServers": {
-    "{{.ProjectName}}": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-http", "http://localhost:3001"],
-      "env": {
-        "MCP_AUTH_TOKEN": "{{.AuthToken}}"
-      }
-    }
-  }
-}
-`
-	if err := os.WriteFile(".vendatta/agents/claude-desktop/claude_desktop_config.json.tpl", []byte(claudeTpl), 0644); err != nil {
-		return err
-	}
-	if err := os.WriteFile(".vendatta/agents/claude-code/claude_code_config.json.tpl", []byte(claudeTpl), 0644); err != nil {
 		return err
 	}
 
@@ -548,7 +512,7 @@ func (c *BaseController) Apply(ctx context.Context) error {
 			if err := c.generateCursorConfig(cfg); err != nil {
 				fmt.Printf("❌ Failed to update Cursor config: %v\n", err)
 			} else {
-				fmt.Println("✅ Updated Cursor MCP configuration")
+				fmt.Println("✅ Updated Cursor configuration")
 			}
 		case "opencode":
 			if err := c.generateOpenCodeConfig(cfg); err != nil {
@@ -596,27 +560,8 @@ func detectInstalledAgents() []string {
 }
 
 func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
-	cursorConfig := map[string]interface{}{
-		"mcpServers": map[string]interface{}{
-			cfg.Name: map[string]interface{}{
-				"type": "http",
-				"url":  "http://localhost:3001",
-				"headers": map[string]string{
-					"Authorization": "Bearer auto-generated-token",
-				},
-			},
-		},
-	}
-
-	data, err := json.MarshalIndent(cursorConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-
 	cursorDir := ".cursor"
 	if err := os.MkdirAll(cursorDir, 0755); err == nil {
-		configPath := filepath.Join(cursorDir, "mcp.json")
-		os.WriteFile(configPath, data, 0644)
 		c.createCursorRules(cursorDir)
 	}
 
@@ -637,8 +582,6 @@ func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
 			continue
 		}
 
-		configPath := filepath.Join(cursorDir, "mcp.json")
-		os.WriteFile(configPath, data, 0644)
 		c.createCursorRules(cursorDir)
 	}
 
@@ -667,13 +610,6 @@ func (c *BaseController) createCursorRules(cursorDir string) error {
 func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 	opencodeConfig := map[string]interface{}{
 		"$schema": "https://opencode.ai/config.json",
-		"mcp": map[string]interface{}{
-			cfg.Name: map[string]interface{}{
-				"type":    "remote",
-				"url":     "http://localhost:3001",
-				"enabled": true,
-			},
-		},
 		"instructions": []string{
 			"AGENTS.md",
 			".opencode/rules/*.md",
@@ -843,15 +779,7 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCodeWorktree(cfg *config.Co
 
 func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 	claudeConfig := map[string]interface{}{
-		"mcpServers": map[string]interface{}{
-			cfg.Name: map[string]interface{}{
-				"command": "npx",
-				"args":    []string{"-y", "mcp-remote", "http://localhost:3001"},
-				"env": map[string]string{
-					"MCP_AUTH_TOKEN": "auto-generated-token",
-				},
-			},
-		},
+		// MCP removed - Claude Desktop config without MCP server
 	}
 
 	data, err := json.MarshalIndent(claudeConfig, "", "  ")
@@ -882,15 +810,7 @@ func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 
 func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 	claudeConfig := map[string]interface{}{
-		"mcpServers": map[string]interface{}{
-			cfg.Name: map[string]interface{}{
-				"command": "npx",
-				"args":    []string{"-y", "mcp-remote", "http://localhost:3001"},
-				"env": map[string]string{
-					"MCP_AUTH_TOKEN": "auto-generated-token",
-				},
-			},
-		},
+		// MCP removed - Claude Code config without MCP server
 	}
 
 	data, err := json.MarshalIndent(claudeConfig, "", "  ")
@@ -919,22 +839,125 @@ func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 	return nil
 }
 
+// isPluginEnabled checks if a plugin should be enabled based on project files
+func (c *BaseController) isPluginEnabled(baseDir, name string) bool {
+	switch name {
+	case "golang":
+		return fileExists(filepath.Join(baseDir, "go.mod")) || fileExists(filepath.Join(baseDir, "go.sum"))
+	case "node":
+		return fileExists(filepath.Join(baseDir, "package.json"))
+	default:
+		return true
+	}
+}
+
+// fileExists checks if a file exists
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// getGitSHA gets the current commit SHA of a git repository
+func (c *BaseController) getGitSHA(repoDir string) (string, error) {
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd.Dir = repoDir
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(output)), nil
+}
+
+// generateContentHash generates a hash of the lockfile content for integrity verification
+func (c *BaseController) generateContentHash(lockfile *lock.Lockfile) (string, error) {
+	// Create canonical representation of plugins
+	var pluginKeys []string
+	for k := range lockfile.Plugins {
+		pluginKeys = append(pluginKeys, k)
+	}
+	sort.Strings(pluginKeys)
+
+	var canonical strings.Builder
+	canonical.WriteString(fmt.Sprintf("version:%s\n", lockfile.Version))
+
+	for _, key := range pluginKeys {
+		entry := lockfile.Plugins[key]
+		canonical.WriteString(fmt.Sprintf("plugin:%s|%s|%s\n",
+			key, entry.Version, entry.SHA))
+	}
+
+	hash := sha256.Sum256([]byte(canonical.String()))
+	return hex.EncodeToString(hash[:]), nil
+}
+
 func (c *BaseController) PluginUpdate(ctx context.Context) error {
 	fmt.Println("🔄 Updating plugins to latest versions...")
 
-	cfg, err := config.LoadConfig(".vendatta/config.yaml")
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+	lockfile := &lock.Lockfile{
+		Version: "1.0",
+		Plugins: make(map[string]*lock.LockEntry),
+		Metadata: lock.LockMetadata{
+			Generator: "vendatta",
+			Extra:     make(map[string]string),
+		},
 	}
 
-	for _, plugin := range cfg.Plugins {
-		repo, ok := plugin.(config.TemplateRepo)
-		if !ok {
-			continue
-		}
-		fmt.Printf("📦 %s: checking for updates...\n", repo.URL)
-		fmt.Printf("📦 %s: already latest\n", repo.URL)
+	vendattaDir := ".vendatta"
+	remotesDir := filepath.Join(vendattaDir, "remotes")
+	entries, err := os.ReadDir(remotesDir)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to read remotes dir: %w", err)
 	}
+
+	if entries != nil {
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			repoName := entry.Name()
+			repoDir := filepath.Join(remotesDir, repoName)
+
+			cmd := exec.Command("git", "config", "--get", "remote.origin.url")
+			cmd.Dir = repoDir
+			urlBytes, err := cmd.Output()
+			if err != nil {
+				continue
+			}
+			url := strings.TrimSpace(string(urlBytes))
+
+			sha, err := c.getGitSHA(repoDir)
+			if err != nil {
+				continue
+			}
+
+			lockfile.Plugins[repoName] = &lock.LockEntry{
+				Name:       repoName,
+				Version:    "latest",
+				SHA:        sha,
+				Repository: url,
+				Path:       "",
+				Metadata:   make(map[string]string),
+			}
+		}
+	}
+
+	if len(lockfile.Plugins) > 0 {
+		contentHash, err := c.generateContentHash(lockfile)
+		if err != nil {
+			return fmt.Errorf("failed to generate content hash: %w", err)
+		}
+		lockfile.Metadata.ContentHash = contentHash
+
+		if err := c.LockManager.SaveLockfile(lockfile); err != nil {
+			return fmt.Errorf("failed to save lockfile: %w", err)
+		}
+
+		fmt.Println("✅ Updated vendatta.lock")
+	}
+
+	fmt.Println("✅ All plugins updated successfully")
+
+	// TODO: Implement lockfile generation
 
 	fmt.Println("✅ Updated vendatta.lock")
 	fmt.Println("✅ All plugins updated successfully")

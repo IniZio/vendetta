@@ -118,12 +118,7 @@ services:
     command: "cd client && npm run dev"
     depends_on: ["api"]
 
-# Enable AI agents
-agents:
-  - name: "cursor"
-    enabled: true
-  - name: "opencode"
-    enabled: true
+
 ```
 
 Run `vendatta workspace create my-feature && vendatta workspace up my-feature` to create and start your workspace.
@@ -178,7 +173,6 @@ vendatta workspace rm <name>      # Remove workspace
 **Generated Structure:**
 ```
 .cursor/
-├── mcp.json
 └── rules/
     └── [plugin-name]/
         ├── rule1.md
@@ -203,7 +197,7 @@ env | grep VENDATTA_SERVICE
 # VENDATTA_SERVICE_WEB_URL=http://localhost:3000
 ```
 
-**AI Agent Integration**: Opens worktree in Cursor/OpenCode with auto-configured MCP server
+**AI Agent Integration**: Automatically configures Cursor, OpenCode, and Claude agents for isolated development
 
 **Plugin System**: Load capabilities from remote repos, enable what you need:
 - **Rules**: Coding standards and linting

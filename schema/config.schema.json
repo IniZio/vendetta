@@ -47,30 +47,6 @@
         "$ref": "#/definitions/agent"
       }
     },
-    "mcp": {
-      "type": "object",
-      "description": "Model Context Protocol server configuration",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Enable MCP server",
-          "default": true
-        },
-        "port": {
-          "type": "integer",
-          "description": "MCP server port",
-          "minimum": 1,
-          "maximum": 65535,
-          "default": 3001
-        },
-        "host": {
-          "type": "string",
-          "description": "MCP server host",
-          "default": "localhost"
-        }
-      },
-      "additionalProperties": false
-    },
     "docker": {
       "type": "object",
       "description": "Docker provider configuration",
