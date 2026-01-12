@@ -140,6 +140,13 @@ func (p *LXCProvider) Exec(ctx context.Context, sessionID string, opts provider.
 		}
 	}
 
+	if opts.StdoutWriter != nil || opts.StderrWriter != nil {
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to execute command in LXC container %s: %w", containerName, err)
+		}
+		return nil
+	}
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to execute command in LXC container %s: %w: %s", containerName, err, string(output))
