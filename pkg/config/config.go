@@ -279,6 +279,11 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			continue
 		}
 
+		// Skip agents that don't have a template (like cursor which only generates rules)
+		if cfg.templatePath == "" {
+			continue
+		}
+
 		templateContent, err := os.ReadFile(cfg.templatePath)
 		if err != nil {
 			return fmt.Errorf("failed to read template %s: %w", cfg.templatePath, err)
