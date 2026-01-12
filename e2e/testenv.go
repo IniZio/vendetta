@@ -90,13 +90,35 @@ func (env *TestEnvironment) BuildVendattaBinary(t *testing.T) string {
 		return env.binaryPath
 	}
 
+	// Find the vendatta source directory by walking up from the test executable
+	// until we find a directory containing go.mod
+	repoRoot := findRepoRoot(t)
+
 	binaryPath := filepath.Join(env.tempDir, "vendatta")
 	cmd := exec.Command("go", "build", "-o", binaryPath, "cmd/vendatta/main.go")
-	cmd.Dir = ".."
+	cmd.Dir = repoRoot
 	require.NoError(t, cmd.Run())
 
 	env.binaryPath = binaryPath
 	return binaryPath
+}
+
+// findRepoRoot finds the repository root by looking for go.mod
+func findRepoRoot(t *testing.T) string {
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatalf("Could not find repository root (go.mod not found)")
+		}
+		dir = parent
+	}
 }
 
 // RunVendattaCommand runs a vendatta command and returns the output

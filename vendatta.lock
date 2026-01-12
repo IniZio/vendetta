@@ -1,0 +1,11 @@
+_version: "1.0"
+plugins:
+    vendatta-config:
+        name: vendatta-config
+        version: latest
+        sha: 7f0d71a94af75efbd1580cce64567f654d63d20f
+        repository: https://github.com/IniZio/vendatta-config
+_metadata:
+    content_hash: a8ebd6b520e0a931a6347dab83de9e137ba090282e845e7560ac3cb64684bddf
+    timestamp: ""
+    generator: vendatta
