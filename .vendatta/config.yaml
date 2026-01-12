@@ -1,15 +1,15 @@
-name: "vibegear-test"
-
+name: my-project
+provider: lxc
 extends:
   - inizio/vendatta-config-inizio
-
 plugins:
   - golang
-
+  - node
 services:
-  test:
-    command: "echo 'Test service running'"
-    port: 8080
-
+  web:
+    port: 3000
 docker:
   image: ubuntu:22.04
+  dind: true
+hooks:
+  setup: .vendatta/hooks/up.sh

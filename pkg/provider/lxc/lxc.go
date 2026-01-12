@@ -29,22 +29,24 @@ func (p *LXCProvider) Name() string {
 func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePath string, config interface{}) (*provider.Session, error) {
 	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 
-	// Launch LXC container
-	cmd := exec.CommandContext(ctx, "lxc", "launch", "ubuntu:22.04", containerName)
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to launch LXC container: %w", err)
+	cmd := exec.CommandContext(ctx, "lxc", "init", "ubuntu:22.04", containerName, "--config", "limits.memory=512MB")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to init LXC container: %w: %s", err, string(output))
 	}
 
-	// Wait for container to start
-	cmd = exec.CommandContext(ctx, "lxc", "exec", containerName, "--", "sleep", "2")
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to wait for container startup: %w", err)
+	// Add bind mount for worktree
+	mountCmd := exec.CommandContext(ctx, "lxc", "config", "device", "add", containerName, "worktree", "disk", fmt.Sprintf("source=%s", workspacePath), "path=/workspace")
+	mountOutput, mountErr := mountCmd.CombinedOutput()
+	if mountErr != nil {
+		p.Destroy(ctx, sessionID)
+		return nil, fmt.Errorf("failed to mount worktree: %w: %s", mountErr, string(mountOutput))
 	}
 
 	session := &provider.Session{
 		ID:       sessionID,
 		Provider: p.name,
-		Status:   "running",
+		Status:   "",
 		Labels: map[string]string{
 			"vendatta.session.id": sessionID,
 		},
@@ -56,24 +58,33 @@ func (p *LXCProvider) Create(ctx context.Context, sessionID string, workspacePat
 func (p *LXCProvider) Start(ctx context.Context, sessionID string) error {
 	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 	cmd := exec.CommandContext(ctx, "lxc", "start", containerName)
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to start LXC container %s: %w: %s", containerName, err, string(output))
+	}
+	return nil
 }
 
 func (p *LXCProvider) Stop(ctx context.Context, sessionID string) error {
 	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 	cmd := exec.CommandContext(ctx, "lxc", "stop", containerName)
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to stop LXC container %s: %w: %s", containerName, err, string(output))
+	}
+	return nil
 }
 
 func (p *LXCProvider) Destroy(ctx context.Context, sessionID string) error {
 	containerName := fmt.Sprintf("vendatta-%s", sessionID)
 
-	// Stop first if running
-	p.Stop(ctx, sessionID)
-
-	// Delete container
+	// lxc delete will implicitly stop the container
 	cmd := exec.CommandContext(ctx, "lxc", "delete", containerName)
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to delete LXC container %s: %w: %s", containerName, err, string(output))
+	}
+	return nil
 }
 
 func (p *LXCProvider) List(ctx context.Context) ([]provider.Session, error) {
@@ -86,7 +97,7 @@ func (p *LXCProvider) List(ctx context.Context) ([]provider.Session, error) {
 	var sessions []provider.Session
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 
-	for _, line := range lines[1:] { // Skip header
+	for _, line := range lines[1:] {
 		if line == "" {
 			continue
 		}
@@ -129,5 +140,9 @@ func (p *LXCProvider) Exec(ctx context.Context, sessionID string, opts provider.
 		}
 	}
 
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to execute command in LXC container %s: %w: %s", containerName, err, string(output))
+	}
+	return nil
 }

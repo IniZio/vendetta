@@ -1295,9 +1295,9 @@ func (c *BaseController) setupWorkspaceEnvironment(ctx context.Context, session 
 	os.WriteFile(envFile, []byte(strings.Join(envLines, "\n")), 0644)
 
 	if cfg.Hooks.Setup != "" {
-		hookPath := filepath.Join(workspacePath, ".vendatta/hooks", filepath.Base(cfg.Hooks.Setup))
+
 		return p.Exec(ctx, session.ID, provider.ExecOptions{
-			Cmd: []string{"/bin/bash", "/workspace/" + filepath.Base(hookPath)},
+			Cmd: []string{"/bin/bash", filepath.Join("/workspace", cfg.Hooks.Setup)},
 			Env: envLines,
 		})
 	}
