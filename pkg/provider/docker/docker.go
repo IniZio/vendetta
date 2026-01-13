@@ -7,17 +7,35 @@ import (
 	"os"
 	"strings"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/vibegear/vendatta/pkg/config"
 	"github.com/vibegear/vendatta/pkg/provider"
 )
 
+// DockerClientInterface defines the methods needed by DockerProvider
+type DockerClientInterface interface {
+	ImagePull(ctx context.Context, refStr string, options image.PullOptions) (io.ReadCloser, error)
+	ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, platform *ocispec.Platform, containerName string) (container.CreateResponse, error)
+	ContainerStart(ctx context.Context, containerID string, options container.StartOptions) error
+	ContainerStop(ctx context.Context, containerID string, options container.StopOptions) error
+	ContainerRemove(ctx context.Context, containerID string, options container.RemoveOptions) error
+	ContainerExecCreate(ctx context.Context, containerID string, config container.ExecOptions) (types.IDResponse, error)
+	ContainerExecAttach(ctx context.Context, execID string, config container.ExecAttachOptions) (types.HijackedResponse, error)
+	ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error)
+}
+
+// Ensure client.Client implements DockerClientInterface at compile time
+var _ DockerClientInterface = (*client.Client)(nil)
+
 type DockerProvider struct {
-	cli *client.Client
+	cli DockerClientInterface
 }
 
 func NewDockerProvider() (*DockerProvider, error) {
@@ -26,6 +44,11 @@ func NewDockerProvider() (*DockerProvider, error) {
 		return nil, err
 	}
 	return &DockerProvider{cli: cli}, nil
+}
+
+// NewDockerProviderWithClient creates a DockerProvider with a custom client (useful for testing)
+func NewDockerProviderWithClient(cli DockerClientInterface) *DockerProvider {
+	return &DockerProvider{cli: cli}
 }
 
 func (p *DockerProvider) Name() string {
