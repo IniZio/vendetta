@@ -50,7 +50,19 @@ func (m *Manager) cloneRepo(repo TemplateRepo, repoDir string) error {
 
 	_, err := git.PlainClone(repoDir, false, options)
 	if err != nil {
-		return fmt.Errorf("failed to clone template repo %s: %w", repo.URL, err)
+		// Fall back to main if specified branch doesn't exist
+		if repo.Branch != "" && repo.Branch != "main" {
+			options.ReferenceName = plumbing.NewBranchReferenceName("main")
+			_, err = git.PlainClone(repoDir, false, options)
+			if err != nil {
+				// Fall back to master if main doesn't exist
+				options.ReferenceName = plumbing.NewBranchReferenceName("master")
+				_, err = git.PlainClone(repoDir, false, options)
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("failed to clone template repo %s: %w", repo.URL, err)
+		}
 	}
 
 	fmt.Printf("Cloned template repo %s to %s\n", repo.URL, repoDir)
@@ -72,16 +84,33 @@ func (m *Manager) updateRepo(repo TemplateRepo, repoDir string) error {
 		RemoteName: "origin",
 	}
 
-	if repo.Branch != "" {
-		options.ReferenceName = plumbing.NewBranchReferenceName(repo.Branch)
+	branchToTry := repo.Branch
+	if branchToTry == "" {
+		branchToTry = "main"
 	}
 
-	err = w.Pull(options)
-	if err != nil && err != git.NoErrAlreadyUpToDate {
-		return fmt.Errorf("failed to pull template repo %s: %w", repo.URL, err)
+	tryBranches := []string{branchToTry}
+	if branchToTry != "main" {
+		tryBranches = append(tryBranches, "main")
+	}
+	if branchToTry != "master" {
+		tryBranches = append(tryBranches, "master")
 	}
 
-	if err == git.NoErrAlreadyUpToDate {
+	var pullErr error
+	for _, branch := range tryBranches {
+		options.ReferenceName = plumbing.NewBranchReferenceName(branch)
+		pullErr = w.Pull(options)
+		if pullErr == nil || pullErr == git.NoErrAlreadyUpToDate {
+			break
+		}
+	}
+
+	if pullErr != nil && pullErr != git.NoErrAlreadyUpToDate {
+		return fmt.Errorf("failed to pull template repo %s: %w", repo.URL, pullErr)
+	}
+
+	if pullErr == git.NoErrAlreadyUpToDate {
 		fmt.Printf("Template repo %s is already up to date\n", repo.URL)
 	} else {
 		fmt.Printf("Updated template repo %s\n", repo.URL)
@@ -115,4 +144,53 @@ func (m *Manager) ListRepos() ([]string, error) {
 func extractRepoName(url string) string {
 	parts := strings.Split(strings.TrimSuffix(url, ".git"), "/")
 	return parts[len(parts)-1]
+}
+
+// GetRepoDir returns the directory path for a given repository name
+func (m *Manager) GetRepoDir(repoName string) string {
+	return filepath.Join(m.baseDir, "remotes", repoName)
+}
+
+// PullWithoutUpdate clones a repository if it doesn't exist, but does NOT fetch updates.
+// Used during normal operations (like Merge) to use cached repos without network calls.
+func (m *Manager) PullWithoutUpdate(repo TemplateRepo) error {
+	repoName := extractRepoName(repo.URL)
+	repoDir := m.GetRepoDir(repoName)
+
+	if _, err := os.Stat(repoDir); !os.IsNotExist(err) {
+		return nil
+	}
+
+	return m.cloneRepo(repo, repoDir)
+}
+
+// PullWithUpdate explicitly updates a repository from remote.
+// Used by 'vendatta update' to fetch latest changes.
+func (m *Manager) PullWithUpdate(repo TemplateRepo) error {
+	repoName := extractRepoName(repo.URL)
+	repoDir := m.GetRepoDir(repoName)
+
+	if _, err := os.Stat(repoDir); os.IsNotExist(err) {
+		return m.cloneRepo(repo, repoDir)
+	}
+
+	return m.updateRepo(repo, repoDir)
+}
+
+// GetRepoSHA returns the current commit SHA for a repository
+func (m *Manager) GetRepoSHA(repo TemplateRepo) (string, error) {
+	repoName := extractRepoName(repo.URL)
+	repoDir := m.GetRepoDir(repoName)
+
+	r, err := git.PlainOpen(repoDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to open repo %s: %w", repoDir, err)
+	}
+
+	ref, err := r.Head()
+	if err != nil {
+		return "", fmt.Errorf("failed to get head for %s: %w", repoDir, err)
+	}
+
+	return ref.Hash().String(), nil
 }
