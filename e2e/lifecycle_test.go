@@ -68,6 +68,8 @@ services:
 	time.Sleep(3 * time.Second)
 
 	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "down", "lifecycle-test")
+	// down stops the container, rm removes the worktree
+	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "rm", "lifecycle-test")
 
 	_, err = os.Stat(worktreePath)
 	require.Error(t, err)
