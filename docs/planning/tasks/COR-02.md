@@ -2,7 +2,7 @@
 
 ## 🚨 CRITICAL ISSUE
 
-Service discovery environment variables (e.g., `VENDATTA_SERVICE_WEB_URL`, `VENDATTA_SERVICE_API_URL`) are not available in running containers, breaking a core advertised feature.
+Service discovery environment variables (e.g., `vendetta_SERVICE_WEB_URL`, `vendetta_SERVICE_API_URL`) are not available in running containers, breaking a core advertised feature.
 
 ## Root Cause
 
@@ -14,7 +14,7 @@ Users cannot access service URLs through environment variables in their developm
 
 ## Evidence
 
-- **E2E Test Failure**: `TestVendattaServiceDiscovery` fails because expected environment variables are missing
+- **E2E Test Failure**: `TestvendettaServiceDiscovery` fails because expected environment variables are missing
 - **Code Location**: `pkg/provider/docker/docker.go:104-113`
 - **Test Results**: Environment variables collected but never applied to container config
 
@@ -30,7 +30,7 @@ for name, svc := range cfg.Services {
         pStr := fmt.Sprintf("%d/tcp", svc.Port)
         if bindings, ok := json.NetworkSettings.Ports[nat.Port(pStr)]; ok && len(bindings) > 0 {
             url := fmt.Sprintf("http://localhost:%s", bindings[0].HostPort)
-            env = append(env, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", name, url))
+            env = append(env, fmt.Sprintf("vendetta_SERVICE_%s_URL=%s", name, url))
         }
     }
 }
@@ -45,7 +45,7 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
     Image: imgName,
     Tty:   true,
     Labels: map[string]string{
-        "vendatta.session.id": sessionID,
+        "vendetta.session.id": sessionID,
     },
     Cmd:          []string{"/bin/bash"},
     Env:          env,  // ← ADD THIS LINE
@@ -60,8 +60,8 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
 ## Testing
 
 After fix:
-1. Run `TestVendattaServiceDiscovery` - should pass
-2. Manual verification: Create session with services, exec into container, check `env | grep VENDATTA_SERVICE`
+1. Run `TestvendettaServiceDiscovery` - should pass
+2. Manual verification: Create session with services, exec into container, check `env | grep vendetta_SERVICE`
 
 ## Priority
 🚨 **CRITICAL** - Breaks core advertised functionality

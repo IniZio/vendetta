@@ -1,6 +1,6 @@
-# Vendatta Example Project
+# vendetta Example Project
 
-This directory contains a complete working example of an Vendatta-configured project. It demonstrates a full-stack web application with database, API, and frontend services, plus AI agent integration.
+This directory contains a complete working example of an vendetta-configured project. It demonstrates a full-stack web application with database, API, and frontend services, plus AI agent integration.
 
 ## What's Included
 
@@ -21,26 +21,26 @@ This directory contains a complete working example of an Vendatta-configured pro
 
 ## Quick Start
 
-1. **Initialize Vendatta**:
+1. **Initialize vendetta**:
    ```bash
    cd example
-   ../vendatta init
+   ../vendetta init
    ```
 
 2. **Start development environment**:
    ```bash
-   ../vendatta dev example-branch
+   ../vendetta dev example-branch
    ```
 
 3. **Open in your AI agent**:
-   - **Cursor**: Open `.vendatta/worktrees/example-branch/`
+   - **Cursor**: Open `.vendetta/worktrees/example-branch/`
    - **OpenCode**: Uses the generated `opencode.json`
    - **Claude**: Uses the generated config files
 
 ## Configuration Structure
 
 ```
-.vendatta/
+.vendetta/
 ├── config.yaml          # Project configuration
 ├── templates/           # Shared AI capabilities
 │   ├── skills/          # Reusable skills
@@ -75,7 +75,7 @@ PostgreSQL runs on `localhost:5432` with credentials from `.env`.
 ## Customizing
 
 ### Add Your Own Skills
-Create `.vendatta/templates/skills/my-skill.yaml`:
+Create `.vendetta/templates/skills/my-skill.yaml`:
 ```yaml
 name: "my-skill"
 description: "Does something useful"
@@ -89,10 +89,10 @@ execute:
 ```
 
 ### Modify Rules
-Edit `.vendatta/templates/rules/code-quality.md` to match your team's standards.
+Edit `.vendetta/templates/rules/code-quality.md` to match your team's standards.
 
 ### Configure Services
-Update `.vendatta/config.yaml` to change ports, add services, or enable different agents.
+Update `.vendetta/config.yaml` to change ports, add services, or enable different agents.
 
 ## Troubleshooting
 
@@ -107,10 +107,10 @@ netstat -tlnp | grep :3000
 Check generated agent configs in the worktree.
 
 ### Configuration Issues
-Check generated configs in `.vendatta/worktrees/<branch>/`
+Check generated configs in `.vendetta/worktrees/<branch>/`
 
 ## Learn More
 
-- [Main README](../../README.md) - General Vendatta documentation
+- [Main README](../../README.md) - General vendetta documentation
 - [Configuration Reference](../../docs/spec/product/configuration.md) - Detailed config options
 - [Technical Specs](../../docs/spec/technical/) - Architecture details

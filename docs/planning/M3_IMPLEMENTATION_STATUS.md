@@ -1,6 +1,6 @@
 # M3 Implementation Status Tracking
 
-**Project**: Vendatta M3 - Provider-Agnostic Remote Nodes with Coordination Server  
+**Project**: vendetta M3 - Provider-Agnostic Remote Nodes with Coordination Server  
 **Current Status**: 20% Complete 🔴  
 **Last Updated**: January 13, 2026  
 **Verification Method**: Architecture analysis + corrected understanding  

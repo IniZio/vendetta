@@ -10,39 +10,39 @@ Implement config pull and sync commands for sharing templates and configurations
 
 ### **Config Pull Command**
 ```bash
-vendatta config pull <url> [--branch=branch]
+vendetta config pull <url> [--branch=branch]
 ```
 
 **Functionality:**
-- Clone remote Git repository into `.vendatta/remotes/`
+- Clone remote Git repository into `.vendetta/remotes/`
 - Extract templates from repository
 - Merge with existing templates (remote overrides base)
 - Support branch specification for template versioning
 
 ### **Config Sync Commands**
 ```bash
-vendatta config sync <target>      # Sync to specific target
-vendatta config sync-all          # Sync to all configured targets
+vendetta config sync <target>      # Sync to specific target
+vendetta config sync-all          # Sync to all configured targets
 ```
 
 **Functionality:**
-- Read sync targets from `.vendatta/config.yaml`
-- Create filtered Git branch with only `.vendatta` directory
+- Read sync targets from `.vendetta/config.yaml`
+- Create filtered Git branch with only `.vendetta` directory
 - Push to remote repository
 - Clean up temporary branches
 
 ### **Configuration Schema**
 ```yaml
-# .vendatta/config.yaml
+# .vendetta/config.yaml
 sync_targets:
   - name: "team-templates"
-    url: "https://github.com/company/vendatta-templates.git"
+    url: "https://github.com/company/vendetta-templates.git"
   - name: "project-configs"
-    url: "https://github.com/project/vendatta-configs.git"
+    url: "https://github.com/project/vendetta-configs.git"
 ```
 
 ### **Template Merging**
-- **Remote Ref Tracking**: Store latest commit SHA for each remote in `.vendatta/state.json`
+- **Remote Ref Tracking**: Store latest commit SHA for each remote in `.vendetta/state.json`
 - **Fast-Forward Merging**: When remote has linear history from stored ref, prefer remote templates
 - **Conflict Resolution**: Use chezmoi-style interactive reconciliation for merge conflicts
 - **Precedence Order**: remote (fast-forward) > local modifications > base templates
@@ -64,24 +64,24 @@ sync_targets:
 ### **E2E Scenarios**
 ```bash
 # Test config pulling
-vendatta config pull https://github.com/company/templates.git --branch=main
+vendetta config pull https://github.com/company/templates.git --branch=main
 
 # Verify templates merged
-ls .vendatta/templates/
+ls .vendetta/templates/
 # Should contain both base and remote templates
 
 # Test config syncing
-cat > .vendatta/config.yaml << EOF
+cat > .vendetta/config.yaml << EOF
 sync_targets:
   - name: test-sync
     url: https://github.com/test/repo.git
 EOF
 
 # Create some config
-echo "test config" > .vendatta/test.txt
+echo "test config" > .vendetta/test.txt
 
-vendatta config sync test-sync
-# Verify: .vendatta directory pushed to remote repo
+vendetta config sync test-sync
+# Verify: .vendetta directory pushed to remote repo
 ```
 
 ## 📋 Implementation Steps

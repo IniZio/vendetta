@@ -31,7 +31,7 @@ services:
       - api
 
 remotes:
-  - url: "https://github.com/IniZio/vendatta-config"
+  - url: "https://github.com/IniZio/vendetta-config"
     branch: "main"
 agents:
   - name: opencode
@@ -56,4 +56,4 @@ docker:
   image: ubuntu:22.04
   dind: true
 hooks:
-  setup: .vendatta/hooks/setup.sh
+  setup: .vendetta/hooks/setup.sh

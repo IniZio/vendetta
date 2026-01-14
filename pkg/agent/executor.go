@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/vibegear/vendatta/pkg/provider"
+	"github.com/vibegear/vendetta/pkg/provider"
 )
 
 // Executor handles command execution using local providers

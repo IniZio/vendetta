@@ -10,34 +10,34 @@ Implement the complete workspace command group with context awareness, proper is
 
 ### **Command Structure**
 ```bash
-vendatta workspace create <name>     # Create workspace + configs
-vendatta workspace up [name] [-d]    # Start services (detached optional)
-vendatta workspace shell [name]      # Interactive shell
-vendatta workspace stop [name]       # Stop services
-vendatta workspace down [name]       # Stop + cleanup
-vendatta workspace list              # List all workspaces
-vendatta workspace rm <name>         # Remove workspace
+vendetta workspace create <name>     # Create workspace + configs
+vendetta workspace up [name] [-d]    # Start services (detached optional)
+vendetta workspace shell [name]      # Interactive shell
+vendetta workspace stop [name]       # Stop services
+vendetta workspace down [name]       # Stop + cleanup
+vendetta workspace list              # List all workspaces
+vendetta workspace rm <name>         # Remove workspace
 # Note: 'agent' command removed per latest spec
 ```
 
 ### **Context Awareness**
-- If inside `.vendatta/worktrees/<name>/`, auto-detect workspace name
+- If inside `.vendetta/worktrees/<name>/`, auto-detect workspace name
 - Commands accept optional `[name]` parameter for explicit specification
 - Validate workspace existence before operations
 
 ### **Workspace Isolation**
-- **Worktree Creation**: `git worktree add .vendatta/worktrees/<name>`
+- **Worktree Creation**: `git worktree add .vendetta/worktrees/<name>`
 - **Branch Handling**: Auto-create branch if doesn't exist; for conflicts: stash changes, create/checkout branch, stash pop
-- **Container Naming**: `vendatta-workspace-<name>` for easy identification
+- **Container Naming**: `vendetta-workspace-<name>` for easy identification
 
 ### **Agent Config Generation**
 - Generate configs during `workspace create`
 - Place configs in worktree root (`.cursor/mcp.json`, `opencode.json`, etc.)
-- Support file-based overrides from `.vendatta/agents/`
+- Support file-based overrides from `.vendetta/agents/`
 
 ### **Service Discovery Integration**
 - Collect port mappings during container startup
-- Inject `VENDATTA_SERVICE_*_URL` environment variables
+- Inject `vendetta_SERVICE_*_URL` environment variables
 - Make variables available in hooks and container shell
 
 ## 🧪 Testing Requirements
@@ -58,16 +58,16 @@ vendatta workspace rm <name>         # Remove workspace
 ### **E2E Scenarios**
 ```bash
 # Happy path
-vendatta workspace create feature-x
-vendatta workspace up
+vendetta workspace create feature-x
+vendetta workspace up
 # Verify: Worktree created, container running, configs generated
 
 # Context awareness
-cd .vendatta/worktrees/feature-x
-vendatta workspace up  # Should work without specifying name
+cd .vendetta/worktrees/feature-x
+vendetta workspace up  # Should work without specifying name
 
 # Error handling
-vendatta workspace up nonexistent  # Should fail gracefully
+vendetta workspace up nonexistent  # Should fail gracefully
 ```
 
 ## 📋 Implementation Steps

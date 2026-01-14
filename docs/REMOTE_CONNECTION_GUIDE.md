@@ -1,11 +1,11 @@
-# Remote Development with Vendatta M3
+# Remote Development with vendetta M3
 
 ## OIDC Authentication with Authgear
 
-For production use, Vendatta supports OIDC authentication via Authgear:
+For production use, vendetta supports OIDC authentication via Authgear:
 
 ```yaml
-# .vendatta/config.yaml
+# .vendetta/config.yaml
 auth:
   enabled: true
   issuer: "https://certain-thing-311.authgear.cloud"
@@ -28,8 +28,8 @@ This guide covers setting up both **local** and **remote** transport testing to 
 ### On Both Machines (Host & Remote)
 
 ```bash
-# 1. Install Vendatta
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
+# 1. Install vendetta
+curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
 
 # 2. Verify installation
 vendetta --version
@@ -65,22 +65,22 @@ sudo systemctl start sshd
 
 ```bash
 # Create a test project directory
-mkdir -p ~/vendatta-test
-cd ~/vendatta-test
+mkdir -p ~/vendetta-test
+cd ~/vendetta-test
 
-# Initialize vendatta
+# Initialize vendetta
 vendetta init
 
 # Verify structure
 ls -la
-# Should show: .vendatta/ directory
+# Should show: .vendetta/ directory
 ```
 
 ### Step 1.2: Create a Local Workspace (Docker Provider)
 
 ```bash
 # Create config.yaml for local Docker workspace
-cat > .vendatta/config.yaml << 'EOF'
+cat > .vendetta/config.yaml << 'EOF'
 name: local-test-project
 provider: docker
 
@@ -144,7 +144,7 @@ go test ./pkg/transport/... -run TestPool -v
 **On LOCAL machine:**
 ```bash
 # Generate SSH key if not exists
-ls ~/.ssh/id_rsa 2>/dev/null || ssh-keygen -t ed25519 -C "vendatta@local"
+ls ~/.ssh/id_rsa 2>/dev/null || ssh-keygen -t ed25519 -C "vendetta@local"
 
 # Copy public key to remote machine
 ssh-copy-id user@192.168.1.100
@@ -159,18 +159,18 @@ ssh user@192.168.1.100 "echo 'SSH connection successful'"
 
 **On REMOTE machine (192.168.1.100):**
 ```bash
-# Install vendatta
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
+# Install vendetta
+curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
 
 # Create a shared directory for workspaces
-mkdir -p ~/vendatta-shared
-cd ~/vendatta-shared
+mkdir -p ~/vendetta-shared
+cd ~/vendetta-shared
 
-# Initialize vendatta
+# Initialize vendetta
 vendetta init
 
 # Create minimal config
-cat > .vendatta/config.yaml << 'EOF'
+cat > .vendetta/config.yaml << 'EOF'
 name: remote-test
 provider: docker
 docker:
@@ -180,7 +180,7 @@ EOF
 
 ### Step 2.3: Configure Remote Access in Local Project
 
-**On LOCAL machine, edit `~/vendatta-test/.vendatta/config.yaml`:**
+**On LOCAL machine, edit `~/vendetta-test/.vendetta/config.yaml`:**
 
 ```yaml
 name: remote-test-project
@@ -206,7 +206,7 @@ docker:
 ### Step 2.4: Create Remote Workspace
 
 ```bash
-cd ~/vendatta-test
+cd ~/vendetta-test
 
 # Create workspace (will connect to remote via SSH)
 vendetta workspace create remote-demo
@@ -241,7 +241,7 @@ The coordination server enables provider-agnostic remote node management.
 ```bash
 # Create coordination config
 mkdir -p ~/.config/vendetta
-cat > ~/.config/vendatta/coordination.yaml << 'EOF'
+cat > ~/.config/vendetta/coordination.yaml << 'EOF'
 server:
   host: "0.0.0.0"
   port: 3001
@@ -275,7 +275,7 @@ EOF
 
 ```bash
 # Start in background
-vendetta coordination start --config ~/.config/vendatta/coordination.yaml
+vendetta coordination start --config ~/.config/vendetta/coordination.yaml
 
 # Or run with specific port
 vendetta coordination start --host 0.0.0.0 --port 3001
@@ -314,7 +314,7 @@ curl -H "Authorization: Bearer your-secure-token" http://localhost:3001/api/v1/n
 
 ### Step 4.1: Create Complete Remote Configuration
 
-**On LOCAL machine, `~/vendatta-test/.vendatta/config.yaml`:**
+**On LOCAL machine, `~/vendetta-test/.vendetta/config.yaml`:**
 
 ```yaml
 name: full-remote-demo
@@ -350,7 +350,7 @@ docker:
 ### Step 4.2: Create and Start Remote Workspace
 
 ```bash
-cd ~/vendatta-test
+cd ~/vendetta-test
 
 # Create workspace (prepares remote environment)
 vendetta workspace create full-remote
@@ -401,8 +401,8 @@ ssh user@192.168.1.100 "echo 'SSH works'"
 
 ```bash
 # 1. Check if server is running
-ps aux | grep vendatta
-pgrep -a vendatta
+ps aux | grep vendetta
+pgrep -a vendetta
 
 # 2. Check port is listening
 netstat -tlnp | grep 3001
@@ -422,7 +422,7 @@ curl http://192.168.1.100:3001/health
 ```bash
 # 1. Check node agent logs
 # On remote machine:
-journalctl -u vendatta-agent -n 100
+journalctl -u vendetta-agent -n 100
 
 # 2. Verify auth token matches
 # coordination.yaml: auth_token: "your-secure-token"
@@ -455,7 +455,7 @@ docker run --rm hello-world
 ### Enable Authentication
 
 ```yaml
-# ~/.config/vendatta/coordination.yaml
+# ~/.config/vendetta/coordination.yaml
 auth:
   enabled: true
   jwt_secret: "your-secure-minimum-16-char-secret"
@@ -473,10 +473,10 @@ server:
 # Configure nginx as reverse proxy:
 # server {
 #     listen 443 ssl;
-#     server_name vendatta.example.com;
+#     server_name vendetta.example.com;
 #     
-#     ssl_certificate /etc/letsencrypt/live/vendatta.example.com/fullchain.pem;
-#     ssl_certificate_key /etc/letsencrypt/live/vendatta.example.com/privkey.pem;
+#     ssl_certificate /etc/letsencrypt/live/vendetta.example.com/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/vendetta.example.com/privkey.pem;
 #     
 #     location / {
 #         proxy_pass http://localhost:3001;
@@ -528,7 +528,7 @@ After completing all steps, you should have:
 ┌─────────────────────────────────────────────────────────────────┐
 │                        LOCAL MACHINE                             │
 │  ┌─────────────────┐    ┌──────────────────┐                    │
-│  │  Vendatta CLI   │───>│ Coordination     │                    │
+│  │  vendetta CLI   │───>│ Coordination     │                    │
 │  │                 │    │ Server (3001)    │                    │
 │  └─────────────────┘    └────────┬─────────┘                    │
 │                                  │                               │
@@ -544,7 +544,7 @@ After completing all steps, you should have:
 ┌─────────────────────────────────────────────────────────────────┐
 │                       REMOTE MACHINE                             │
 │  ┌─────────────────┐    ┌──────────────────┐                    │
-│  │ SSH Server      │<───│ Vendatta Node    │                    │
+│  │ SSH Server      │<───│ vendetta Node    │                    │
 │  │ (port 22)       │    │ Agent            │                    │
 │  └─────────────────┘    └────────┬─────────┘                    │
 │                                  │                               │

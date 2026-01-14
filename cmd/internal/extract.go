@@ -10,7 +10,7 @@ import (
 
 // ExtractConfigToPlugin extracts configuration elements to a plugin
 func ExtractConfigToPlugin(pluginName string, extractRules, extractSkills, extractCommands bool) error {
-	pluginDir := filepath.Join(".vendatta", "plugins", pluginName)
+	pluginDir := filepath.Join(".vendetta", "plugins", pluginName)
 	if err := os.MkdirAll(pluginDir, 0755); err != nil {
 		return fmt.Errorf("failed to create plugin directory: %w", err)
 	}
@@ -19,12 +19,12 @@ func ExtractConfigToPlugin(pluginName string, extractRules, extractSkills, extra
 		"name":        pluginName,
 		"version":     "1.0.0",
 		"description": fmt.Sprintf("Extracted plugin from %s project", pluginName),
-		"author":      "Vendatta Config Extractor",
+		"author":      "vendetta Config Extractor",
 	}
 
 	// Extract rules
 	if extractRules {
-		rulesDir := filepath.Join(".vendatta", "templates", "rules")
+		rulesDir := filepath.Join(".vendetta", "templates", "rules")
 		if _, err := os.Stat(rulesDir); err == nil {
 			if err := extractDirectory(rulesDir, filepath.Join(pluginDir, "rules"), "rules"); err != nil {
 				return fmt.Errorf("failed to extract rules: %w", err)
@@ -35,7 +35,7 @@ func ExtractConfigToPlugin(pluginName string, extractRules, extractSkills, extra
 
 	// Extract skills
 	if extractSkills {
-		skillsDir := filepath.Join(".vendatta", "templates", "skills")
+		skillsDir := filepath.Join(".vendetta", "templates", "skills")
 		if _, err := os.Stat(skillsDir); err == nil {
 			if err := extractDirectory(skillsDir, filepath.Join(pluginDir, "skills"), "skills"); err != nil {
 				return fmt.Errorf("failed to extract skills: %w", err)
@@ -46,7 +46,7 @@ func ExtractConfigToPlugin(pluginName string, extractRules, extractSkills, extra
 
 	// Extract commands
 	if extractCommands {
-		commandsDir := filepath.Join(".vendatta", "templates", "commands")
+		commandsDir := filepath.Join(".vendetta", "templates", "commands")
 		if _, err := os.Stat(commandsDir); err == nil {
 			if err := extractDirectory(commandsDir, filepath.Join(pluginDir, "commands"), "commands"); err != nil {
 				return fmt.Errorf("failed to extract commands: %w", err)

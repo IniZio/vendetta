@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/vibegear/vendatta/pkg/config"
-	"github.com/vibegear/vendatta/pkg/provider"
+	"github.com/vibegear/vendetta/pkg/config"
+	"github.com/vibegear/vendetta/pkg/provider"
 )
 
 type MockProvider struct {
@@ -84,9 +84,9 @@ func TestBaseController_Init(t *testing.T) {
 	err = ctrl.Init(context.Background())
 
 	assert.NoError(t, err)
-	assert.DirExists(t, ".vendatta/hooks")
-	assert.FileExists(t, ".vendatta/config.yaml")
-	assert.FileExists(t, ".vendatta/hooks/up.sh")
+	assert.DirExists(t, ".vendetta/hooks")
+	assert.FileExists(t, ".vendetta/config.yaml")
+	assert.FileExists(t, ".vendetta/hooks/up.sh")
 }
 
 func TestBaseController_WorkspaceRm(t *testing.T) {
@@ -107,8 +107,8 @@ func TestBaseController_WorkspaceRm(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(oldCwd)
 
-	os.MkdirAll(".vendatta/worktrees/test-workspace", 0755)
-	os.WriteFile(".vendatta/config.yaml", []byte("name: test-project"), 0644)
+	os.MkdirAll(".vendetta/worktrees/test-workspace", 0755)
+	os.WriteFile(".vendetta/config.yaml", []byte("name: test-project"), 0644)
 
 	err = ctrl.WorkspaceList(context.Background())
 
@@ -125,7 +125,7 @@ func TestBaseController_WorkspaceList(t *testing.T) {
 			Provider: "docker",
 			Status:   "running",
 			Labels: map[string]string{
-				"vendatta.session.id": "test-project-ws1",
+				"vendetta.session.id": "test-project-ws1",
 			},
 		},
 	}
@@ -143,8 +143,8 @@ func TestBaseController_WorkspaceList(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(oldCwd)
 
-	os.MkdirAll(".vendatta", 0755)
-	os.WriteFile(".vendatta/config.yaml", []byte("name: test-project"), 0644)
+	os.MkdirAll(".vendetta", 0755)
+	os.WriteFile(".vendetta/config.yaml", []byte("name: test-project"), 0644)
 
 	err = ctrl.WorkspaceList(context.Background())
 
@@ -165,12 +165,12 @@ func TestBaseController_WorkspaceCreate(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(oldCwd)
 
-	os.MkdirAll(".vendatta", 0755)
+	os.MkdirAll(".vendetta", 0755)
 	ctrl = NewBaseController(nil, mockWT)
 	err = ctrl.Init(context.Background())
 	assert.NoError(t, err)
 
-	os.WriteFile(".vendatta/config.yaml", []byte("name: test-project\nagents:\n  - name: cursor\n    enabled: true"), 0644)
+	os.WriteFile(".vendetta/config.yaml", []byte("name: test-project\nagents:\n  - name: cursor\n    enabled: true"), 0644)
 	os.WriteFile(".gitignore", []byte("node_modules\n"), 0644)
 
 	wtPath := filepath.Join(tempDir, "worktree-1")
@@ -232,7 +232,7 @@ func TestBaseController_FindProjectRoot(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	projectRoot := filepath.Join(tempDir, "project")
-	os.MkdirAll(filepath.Join(projectRoot, ".vendatta"), 0755)
+	os.MkdirAll(filepath.Join(projectRoot, ".vendetta"), 0755)
 
 	subDir := filepath.Join(projectRoot, "a/b/c")
 	os.MkdirAll(subDir, 0755)
@@ -259,7 +259,7 @@ func TestBaseController_DetectWorkspaceFromCWD(t *testing.T) {
 
 	projectRoot := filepath.Join(tempDir, "project")
 	workspaceName := "my-workspace"
-	workspaceDir := filepath.Join(projectRoot, ".vendatta/worktrees", workspaceName)
+	workspaceDir := filepath.Join(projectRoot, ".vendetta/worktrees", workspaceName)
 	os.MkdirAll(workspaceDir, 0755)
 
 	subDir := filepath.Join(workspaceDir, "src/components")
@@ -290,7 +290,7 @@ func TestBaseController_RunHook(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	hookPath := filepath.Join(tempDir, "test-hook.sh")
-	os.WriteFile(hookPath, []byte("#!/bin/bash\necho \"Hello $WORKSPACE_NAME\"\nprintenv | grep VENDATTA_SERVICE > services.txt\ntouch hooked.txt"), 0755)
+	os.WriteFile(hookPath, []byte("#!/bin/bash\necho \"Hello $WORKSPACE_NAME\"\nprintenv | grep vendetta_SERVICE > services.txt\ntouch hooked.txt"), 0755)
 
 	cfg := &config.Config{
 		Services: map[string]config.Service{
@@ -307,12 +307,12 @@ func TestBaseController_RunHook(t *testing.T) {
 	assert.FileExists(t, filepath.Join(tempDir, ".env"))
 
 	envContent, _ := os.ReadFile(filepath.Join(tempDir, ".env"))
-	assert.Contains(t, string(envContent), "VENDATTA_SERVICE_WEB_URL=http://localhost:3000")
-	assert.Contains(t, string(envContent), "VENDATTA_SERVICE_DB_URL=postgresql://localhost:5432")
+	assert.Contains(t, string(envContent), "vendetta_SERVICE_WEB_URL=http://localhost:3000")
+	assert.Contains(t, string(envContent), "vendetta_SERVICE_DB_URL=postgresql://localhost:5432")
 
 	servicesContent, _ := os.ReadFile(filepath.Join(tempDir, "services.txt"))
-	assert.Contains(t, string(servicesContent), "VENDATTA_SERVICE_WEB_URL")
-	assert.Contains(t, string(servicesContent), "VENDATTA_SERVICE_DB_URL")
+	assert.Contains(t, string(servicesContent), "vendetta_SERVICE_WEB_URL")
+	assert.Contains(t, string(servicesContent), "vendetta_SERVICE_DB_URL")
 }
 
 func TestBaseController_WorkspaceUp(t *testing.T) {
@@ -330,10 +330,10 @@ func TestBaseController_WorkspaceUp(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	projectRoot := filepath.Join(tempDir, "project")
-	os.MkdirAll(filepath.Join(projectRoot, ".vendatta/worktrees/test-ws"), 0755)
-	os.WriteFile(filepath.Join(projectRoot, ".vendatta/config.yaml"), []byte("name: test-project"), 0644)
+	os.MkdirAll(filepath.Join(projectRoot, ".vendetta/worktrees/test-ws"), 0755)
+	os.WriteFile(filepath.Join(projectRoot, ".vendetta/config.yaml"), []byte("name: test-project"), 0644)
 
-	hookDir := filepath.Join(projectRoot, ".vendatta/worktrees/test-ws/.vendatta/hooks")
+	hookDir := filepath.Join(projectRoot, ".vendetta/worktrees/test-ws/.vendetta/hooks")
 	os.MkdirAll(hookDir, 0755)
 	os.WriteFile(filepath.Join(hookDir, "up.sh"), []byte("#!/bin/bash\ntouch up_executed.txt"), 0755)
 
@@ -346,7 +346,7 @@ func TestBaseController_WorkspaceUp(t *testing.T) {
 	err = ctrl.WorkspaceUp(context.Background(), "test-ws")
 
 	assert.NoError(t, err)
-	assert.FileExists(t, filepath.Join(projectRoot, ".vendatta/worktrees/test-ws/up_executed.txt"))
+	assert.FileExists(t, filepath.Join(projectRoot, ".vendetta/worktrees/test-ws/up_executed.txt"))
 }
 
 func TestBaseController_HandleBranchConflicts(t *testing.T) {
@@ -400,7 +400,7 @@ func TestBaseController_WorkspaceDown(t *testing.T) {
 		{
 			ID: "cont-id",
 			Labels: map[string]string{
-				"vendatta.session.id": sessionID,
+				"vendetta.session.id": sessionID,
 			},
 		},
 	}
@@ -419,8 +419,8 @@ func TestBaseController_WorkspaceDown(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(oldCwd)
 
-	os.MkdirAll(".vendatta", 0755)
-	os.WriteFile(".vendatta/config.yaml", []byte("name: test-project"), 0644)
+	os.MkdirAll(".vendetta", 0755)
+	os.WriteFile(".vendetta/config.yaml", []byte("name: test-project"), 0644)
 
 	err = ctrl.WorkspaceDown(context.Background(), "test-ws")
 
@@ -437,7 +437,7 @@ func TestBaseController_WorkspaceShell(t *testing.T) {
 		{
 			ID: "cont-id",
 			Labels: map[string]string{
-				"vendatta.session.id": sessionID,
+				"vendetta.session.id": sessionID,
 			},
 		},
 	}
@@ -456,8 +456,8 @@ func TestBaseController_WorkspaceShell(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(oldCwd)
 
-	os.MkdirAll(".vendatta", 0755)
-	os.WriteFile(".vendatta/config.yaml", []byte("name: test-project"), 0644)
+	os.MkdirAll(".vendetta", 0755)
+	os.WriteFile(".vendetta/config.yaml", []byte("name: test-project"), 0644)
 
 	err = ctrl.WorkspaceShell(context.Background(), "test-ws")
 
@@ -506,7 +506,7 @@ func TestBaseController_SetupWorkspaceEnvironment(t *testing.T) {
 	assert.FileExists(t, filepath.Join(tempDir, ".env"))
 
 	envContent, _ := os.ReadFile(filepath.Join(tempDir, ".env"))
-	assert.Contains(t, string(envContent), "VENDATTA_SERVICE_WEB_URL=http://localhost:32768")
+	assert.Contains(t, string(envContent), "vendetta_SERVICE_WEB_URL=http://localhost:32768")
 
 	mockP.AssertExpectations(t)
 }
@@ -516,13 +516,13 @@ func TestFetchPluginFiles_Integration(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	// Test cloning the actual vendatta repo and fetching rules
-	// Use IniZio/vendatta which is the correct repo name
+	// Test cloning the actual vendetta repo and fetching rules
+	// Use IniZio/vendetta which is the correct repo name
 	ctrl := NewBaseController(nil, nil)
 
 	files, err := ctrl.fetchPluginFiles(
-		"https://github.com/IniZio/vendatta",
-		".vendatta/templates/rules",
+		"https://github.com/IniZio/vendetta",
+		".vendetta/templates/rules",
 		"main",
 	)
 	assert.NoError(t, err)
@@ -548,14 +548,14 @@ func TestFetchPluginFiles_FileContentMatches(t *testing.T) {
 
 	// Fetch rules from our own repo (using correct repo name)
 	files, err := ctrl.fetchPluginFiles(
-		"https://github.com/IniZio/vendatta",
-		".vendatta/templates/rules",
+		"https://github.com/IniZio/vendetta",
+		".vendetta/templates/rules",
 		"main",
 	)
 	assert.NoError(t, err)
 
 	// For each file, verify it can be found and has expected content
-	// by checking for vendatta-specific patterns in the content
+	// by checking for vendetta-specific patterns in the content
 	for _, file := range files {
 		// Verify the content contains expected markers for rules files
 		assert.Contains(t, file.Content, "#", "Rule file %s should have markdown headers", file.Name)

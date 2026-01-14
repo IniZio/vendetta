@@ -1,18 +1,18 @@
 ---
 title: "project"
-description: "Vendatta Project Knowledge Base - Architecture, Conventions, and Anti-Patterns"
+description: "vendetta Project Knowledge Base - Architecture, Conventions, and Anti-Patterns"
 globs: ["**/*"]
 alwaysApply: true
 ---
 
 ## OVERVIEW
-Vendatta (internal codename `vendatta`) is a Go-based orchestration tool that manages isolated development environments. It uses Git worktrees for filesystem isolation and Docker/LXC for execution isolation, providing a standardized MCP (Model Context Protocol) gateway for AI agents.
+vendetta (internal codename `vendetta`) is a Go-based orchestration tool that manages isolated development environments. It uses Git worktrees for filesystem isolation and Docker/LXC for execution isolation, providing a standardized MCP (Model Context Protocol) gateway for AI agents.
 
 ## STRUCTURE
 ```
 vibegear/
 ├── cmd/
-│   └── vendatta/        # CLI entry point (main.go)
+│   └── vendetta/        # CLI entry point (main.go)
 ├── pkg/
 │   ├── config/        # YAML/JSON config parsing & Agent rule generation
 │   ├── ctrl/          # Core orchestration logic (Controller)
@@ -22,7 +22,7 @@ vibegear/
 ├── internal/          # Shared internal utilities
 ├── docs/              # Specifications and planning tasks
 ├── example/           # Full-stack example project
-└── .vendatta/         # Core configuration templates & rules
+└── .vendetta/         # Core configuration templates & rules
 ```
 
 ## WHERE TO LOOK
@@ -32,7 +32,7 @@ vibegear/
 | Modify Lifecycle | `pkg/ctrl/ctrl.go` | `WorkspaceCreate`, `WorkspaceUp`, `WorkspaceDown` |
 | New Provider | `pkg/provider/` | Implement `Provider` interface |
 | Rule Merging | `pkg/templates/` | `merge.go` recursive merging logic |
-| CLI Commands | `cmd/vendatta/main.go` | Root command and subcommands |
+| CLI Commands | `cmd/vendetta/main.go` | Root command and subcommands |
 
 ## TDD (Test-Driven Development)
 **MANDATORY for all logic changes.** Follow RED-GREEN-REFACTOR:
@@ -48,8 +48,8 @@ vibegear/
 ## CONVENTIONS
 - **Language**: Go 1.24
 - **Error Handling**: Always wrap errors: `fmt.Errorf("failed to...: %w", err)`
-- **Configuration**: Declarative YAML in `.vendatta/config.yaml`
-- **Agent Rules**: Markdown with frontmatter, managed in `.vendatta/`
+- **Configuration**: Declarative YAML in `.vendetta/config.yaml`
+- **Agent Rules**: Markdown with frontmatter, managed in `.vendetta/`
 - **Naming**: `pkg/` for exported modules, `internal/` for private implementation
 
 ## ANTI-PATTERNS (THIS PROJECT)
@@ -67,8 +67,8 @@ vibegear/
 ## COMMANDS
 ```bash
 go test ./...                               # Run all tests
-go build -o bin/vendatta ./cmd/vendatta         # Build binary
-go run cmd/vendatta/main.go workspace create  # Test workspace creation
+go build -o bin/vendetta ./cmd/vendetta         # Build binary
+go run cmd/vendetta/main.go workspace create  # Test workspace creation
 ```
 
 ## CI PIPELINE
@@ -78,4 +78,4 @@ go run cmd/vendatta/main.go workspace create  # Test workspace creation
 ## NOTES
 - **LXC Support**: Under development (see M2 milestone)
 - **MCP Gateway**: Built-in server on port 3001 by default
-- **Security**: Worktree directories are gitignored via `.vendatta/worktrees/`
+- **Security**: Worktree directories are gitignored via `.vendetta/worktrees/`

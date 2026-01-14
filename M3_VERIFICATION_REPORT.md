@@ -44,7 +44,7 @@ The M3 implementation shows solid foundation work but has significant gaps in co
 ### 1. Service Discovery (40%)
 **Implemented**:
 - ✅ Port detection from service commands (`detectPortFromCommand`)
-- ✅ Environment variable injection (`VENDATTA_SERVICE_*_URL`)
+- ✅ Environment variable injection (`vendetta_SERVICE_*_URL`)
 - ✅ Service definition parsing with dependencies
 
 **Missing**:

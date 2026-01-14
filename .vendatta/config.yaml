@@ -1,7 +1,7 @@
 name: my-project
 provider: docker
 extends:
-  - inizio/vendatta-config-inizio
+  - inizio/vendetta-config-inizio
 plugins:
   - golang
   - node
@@ -12,4 +12,4 @@ docker:
   image: ubuntu:22.04
   dind: true
 hooks:
-  setup: .vendatta/hooks/up.sh
+  setup: .vendetta/hooks/up.sh

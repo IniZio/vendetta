@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Vendatta Coordination Server provides a centralized API for managing remote nodes and dispatching commands across distributed development environments.
+The vendetta Coordination Server provides a centralized API for managing remote nodes and dispatching commands across distributed development environments.
 
 ## Features
 

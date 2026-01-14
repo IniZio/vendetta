@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vibegear/vendatta/pkg/config"
-	"github.com/vibegear/vendatta/pkg/provider"
-	"github.com/vibegear/vendatta/pkg/transport"
+	"github.com/vibegear/vendetta/pkg/config"
+	"github.com/vibegear/vendetta/pkg/provider"
+	"github.com/vibegear/vendetta/pkg/transport"
 )
 
 type QEMUProvider struct {
@@ -128,10 +128,10 @@ func (p *QEMUProvider) Create(ctx context.Context, sessionID string, workspacePa
 		SSHPort:  sshPort,
 		Services: p.extractServicePorts(cfg),
 		Labels: map[string]string{
-			"vendatta.session.id": sessionID,
-			"vendatta.vm.dir":     vmDir,
-			"vendatta.workspace":  workspacePath,
-			"vendatta.remote":     p.remote,
+			"vendetta.session.id": sessionID,
+			"vendetta.vm.dir":     vmDir,
+			"vendetta.workspace":  workspacePath,
+			"vendetta.remote":     p.remote,
 		},
 	}, nil
 }
@@ -211,9 +211,9 @@ func (p *QEMUProvider) Exec(ctx context.Context, sessionID string, opts provider
 	return nil
 }
 
-// List returns all QEMU VMs managed by vendatta
+// List returns all QEMU VMs managed by vendetta
 func (p *QEMUProvider) List(ctx context.Context) ([]provider.Session, error) {
-	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep -oE 'vendatta-[a-z0-9_-]+' | sort -u")
+	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep -oE 'vendetta-[a-z0-9_-]+' | sort -u")
 	if err != nil {
 		return []provider.Session{}, nil // No VMs running
 	}
@@ -226,7 +226,7 @@ func (p *QEMUProvider) List(ctx context.Context) ([]provider.Session, error) {
 				ID:       id,
 				Provider: p.Name(),
 				Status:   "running",
-				Labels:   map[string]string{"vendatta.session.id": id},
+				Labels:   map[string]string{"vendetta.session.id": id},
 			})
 		}
 	}
@@ -360,7 +360,7 @@ func (p *QEMUProvider) waitForSSH(ctx context.Context, sessionID string, timeout
 }
 
 func (p *QEMUProvider) killVM(ctx context.Context, sessionID string) error {
-	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep 'vendatta-"+sessionID+"' | awk '{print $2}'")
+	output, err := p.execRemote(ctx, "ps aux | grep '[q]emu-system' | grep 'vendetta-"+sessionID+"' | awk '{print $2}'")
 	if err != nil {
 		return err
 	}

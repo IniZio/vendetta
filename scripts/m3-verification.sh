@@ -37,7 +37,7 @@ echo "✅ Basic initialization works"
 # Test 2: Remote Configuration Support
 echo ""
 echo "🧪 Test 2: Remote Configuration Support"
-cat > .vendatta/config.yaml << 'EOF'
+cat > .vendetta/config.yaml << 'EOF'
 name: m3-verification-test
 provider: qemu
 remote:
@@ -64,7 +64,7 @@ echo "✅ Remote configuration file created"
 # Test 3: Configuration Parsing
 echo ""
 echo "🧪 Test 3: Configuration Parsing"
-if grep -q "remote:" .vendatta/config.yaml; then
+if grep -q "remote:" .vendetta/config.yaml; then
     echo "✅ Remote configuration structure parsed"
 else
     echo "❌ Remote configuration parsing failed"
@@ -74,7 +74,7 @@ fi
 echo ""
 echo "🧪 Test 4: Workspace Creation with Remote Config"
 /home/newman/magic/vibegear/bin/vendetta workspace create remote-test
-if [ -d ".vendatta/worktrees/remote-test" ]; then
+if [ -d ".vendetta/worktrees/remote-test" ]; then
     echo "✅ Workspace created with remote configuration"
 else
     echo "❌ Workspace creation failed"
@@ -83,10 +83,10 @@ fi
 # Test 5: QEMU Provider Local Support
 echo ""
 echo "🧪 Test 5: QEMU Provider Local Support (QEMU should work without remote node)"
-cd .vendatta/worktrees/remote-test
+cd .vendetta/worktrees/remote-test
 
 # Create local config for QEMU test
-cat > .vendatta/config.yaml << 'EOF'
+cat > .vendetta/config.yaml << 'EOF'
 name: m3-local-qemu-test
 provider: qemu
 services:
@@ -117,7 +117,7 @@ echo ""
 echo "🧪 Test 6: Provider-Agnostic Support Gap Analysis"
 
 # Test Docker provider remote support
-cat > .vendatta/config.yaml << 'EOF'
+cat > .vendetta/config.yaml << 'EOF'
 name: docker-remote-test
 provider: docker
 remote:
@@ -132,8 +132,8 @@ EOF
 echo "Testing Docker provider with remote config..."
 /home/newman/magic/vibegear/bin/vendetta workspace create docker-remote-test 2>/dev/null || echo "❌ Docker provider lacks remote support"
 
-# Test LXC provider remote support  
-cat > .vendatta/config.yaml << 'EOF'
+# Test LXC provider remote support
+cat > .vendetta/config.yaml << 'EOF'
 name: lxc-remote-test
 provider: lxc
 remote:
@@ -161,7 +161,7 @@ echo "🧪 Test 8: Service Discovery Gap Analysis"
 echo "Testing service discovery capabilities..."
 
 # Create config with multiple services
-cat > .vendatta/config.yaml << 'EOF'
+cat > .vendetta/config.yaml << 'EOF'
 name: service-discovery-test
 provider: qemu
 services:
@@ -170,7 +170,7 @@ services:
     port: 6379
     depends_on: []
   api:
-    command: "npm run dev"  
+    command: "npm run dev"
     port: 3000
     depends_on: ["db"]
   web:
@@ -187,7 +187,7 @@ echo ""
 echo "🧪 Test 9: Error Handling Validation"
 
 # Test invalid remote config
-cat > .vendatta/config.yaml << 'EOF'
+cat > .vendetta/config.yaml << 'EOF'
 name: error-test
 provider: qemu
 remote:
@@ -197,7 +197,7 @@ services:
     command: "sleep infinity"
 EOF
 
-/home/newman/magic/vibegear/bin/vendatta workspace create error-test 2>/dev/null && echo "⚠️  Should reject invalid remote config" || echo "✅ Invalid remote config properly rejected"
+/home/newman/magic/vibegear/bin/vendetta workspace create error-test 2>/dev/null && echo "⚠️  Should reject invalid remote config" || echo "✅ Invalid remote config properly rejected"
 
 # Test 10: CLI Commands Completeness
 echo ""

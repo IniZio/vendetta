@@ -29,7 +29,7 @@ pkg/transport/
 ### Basic Usage
 
 ```go
-import "github.com/vibegear/vendatta/pkg/transport"
+import "github.com/vibegear/vendetta/pkg/transport"
 
 // Create transport manager
 manager := transport.NewManager()
@@ -185,7 +185,7 @@ For communication between coordination server and node agents:
 // Node configuration
 nodeConfig := transport.CreateDefaultSSHConfig(
     "coordinator.example.com:3001",
-    "vendatta", 
+    "vendetta", 
     "/home/vendetta/.ssh/id_rsa",
 )
 
@@ -275,4 +275,4 @@ err := manager.LoadConfig("/etc/vendetta/transports.yaml")
 configs := manager.ListConfigs()
 ```
 
-This transport layer provides a solid foundation for secure, efficient communication in distributed vendatta environments.
+This transport layer provides a solid foundation for secure, efficient communication in distributed vendetta environments.

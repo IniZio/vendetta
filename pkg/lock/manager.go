@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/vibegear/vendatta/pkg/plugins"
+	"github.com/vibegear/vendetta/pkg/plugins"
 )
 
 // LockEntry represents a locked plugin version
@@ -25,7 +25,7 @@ type LockEntry struct {
 	Metadata     map[string]string `yaml:"metadata,omitempty"`
 }
 
-// Lockfile represents the vendatta.lock structure
+// Lockfile represents the vendetta.lock structure
 type Lockfile struct {
 	Version  string                `yaml:"_version"`
 	Plugins  map[string]*LockEntry `yaml:"plugins"`
@@ -56,7 +56,7 @@ func (m *Manager) GenerateLockfile(registry *plugins.Registry, activePlugins []s
 		Version: "1.0",
 		Plugins: make(map[string]*LockEntry),
 		Metadata: LockMetadata{
-			Generator: "vendatta",
+			Generator: "vendetta",
 			Extra:     make(map[string]string),
 		},
 	}
@@ -103,7 +103,7 @@ func (m *Manager) GenerateLockfile(registry *plugins.Registry, activePlugins []s
 
 // LoadLockfile loads a lockfile from disk
 func (m *Manager) LoadLockfile() (*Lockfile, error) {
-	lockPath := filepath.Join(m.baseDir, "vendatta.lock")
+	lockPath := filepath.Join(m.baseDir, "vendetta.lock")
 	data, err := os.ReadFile(lockPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -122,7 +122,7 @@ func (m *Manager) LoadLockfile() (*Lockfile, error) {
 
 // SaveLockfile saves a lockfile to disk
 func (m *Manager) SaveLockfile(lockfile *Lockfile) error {
-	lockPath := filepath.Join(m.baseDir, "vendatta.lock")
+	lockPath := filepath.Join(m.baseDir, "vendetta.lock")
 	data, err := yaml.Marshal(lockfile)
 	if err != nil {
 		return fmt.Errorf("failed to marshal lockfile: %w", err)

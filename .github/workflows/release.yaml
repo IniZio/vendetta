@@ -22,19 +22,19 @@ jobs:
           mkdir -p dist
 
           # Linux AMD64
-          GOOS=linux GOARCH=amd64 go build -o dist/vendatta-linux-amd64 cmd/vendatta/main.go
+          GOOS=linux GOARCH=amd64 go build -o dist/vendetta-linux-amd64 cmd/vendetta/main.go
 
           # Linux ARM64
-          GOOS=linux GOARCH=arm64 go build -o dist/vendatta-linux-arm64 cmd/vendatta/main.go
+          GOOS=linux GOARCH=arm64 go build -o dist/vendetta-linux-arm64 cmd/vendetta/main.go
 
           # Darwin AMD64
-          GOOS=darwin GOARCH=amd64 go build -o dist/vendatta-darwin-amd64 cmd/vendatta/main.go
+          GOOS=darwin GOARCH=amd64 go build -o dist/vendetta-darwin-amd64 cmd/vendetta/main.go
 
           # Darwin ARM64
-          GOOS=darwin GOARCH=arm64 go build -o dist/vendatta-darwin-arm64 cmd/vendatta/main.go
+          GOOS=darwin GOARCH=arm64 go build -o dist/vendetta-darwin-arm64 cmd/vendetta/main.go
 
           # Windows AMD64
-          GOOS=windows GOARCH=amd64 go build -o dist/vendatta-windows-amd64.exe cmd/vendatta/main.go
+          GOOS=windows GOARCH=amd64 go build -o dist/vendetta-windows-amd64.exe cmd/vendetta/main.go
 
       - name: Create release
         env:

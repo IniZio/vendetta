@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vibegear/vendatta/pkg/coordination"
-	"github.com/vibegear/vendatta/pkg/transport"
+	"github.com/vibegear/vendetta/pkg/coordination"
+	"github.com/vibegear/vendetta/pkg/transport"
 )
 
 type LocalTransportTestSuite struct {
@@ -24,7 +24,7 @@ type LocalTransportTestSuite struct {
 }
 
 func (s *LocalTransportTestSuite) SetupTestSuite(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "vendatta-local-transport-*")
+	tempDir, err := os.MkdirTemp("", "vendetta-local-transport-*")
 	require.NoError(t, err)
 	s.tempDir = tempDir
 	s.coordConfig = filepath.Join(tempDir, "coordination.yaml")
@@ -152,7 +152,7 @@ func TestLocalCoordinationServer(t *testing.T) {
 		t.Skip("Skipping coordination server test in short mode")
 	}
 
-	tempDir, err := os.MkdirTemp("", "vendatta-coord-*")
+	tempDir, err := os.MkdirTemp("", "vendetta-coord-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 

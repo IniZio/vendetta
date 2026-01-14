@@ -10,28 +10,28 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/vibegear/vendatta/cmd/internal"
-	"github.com/vibegear/vendatta/pkg/config"
-	"github.com/vibegear/vendatta/pkg/ctrl"
-	"github.com/vibegear/vendatta/pkg/metrics"
-	"github.com/vibegear/vendatta/pkg/provider"
-	dockerProvider "github.com/vibegear/vendatta/pkg/provider/docker"
-	lxcProvider "github.com/vibegear/vendatta/pkg/provider/lxc"
-	"github.com/vibegear/vendatta/pkg/templates"
-	"github.com/vibegear/vendatta/pkg/worktree"
+	"github.com/vibegear/vendetta/cmd/internal"
+	"github.com/vibegear/vendetta/pkg/config"
+	"github.com/vibegear/vendetta/pkg/ctrl"
+	"github.com/vibegear/vendetta/pkg/metrics"
+	"github.com/vibegear/vendetta/pkg/provider"
+	dockerProvider "github.com/vibegear/vendetta/pkg/provider/docker"
+	lxcProvider "github.com/vibegear/vendetta/pkg/provider/lxc"
+	"github.com/vibegear/vendetta/pkg/templates"
+	"github.com/vibegear/vendetta/pkg/worktree"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "vendetta",
 	Short: "Isolated development environments that work with AI agents",
-	Long: `Vendetta provides isolated development environments that integrate 
+	Long: `Vendetta provides isolated development environments that integrate
 seamlessly with AI coding assistants like Cursor, OpenCode, Claude, and others.`,
 }
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize a new vendatta project",
-	Long:  `Initialize a new vendatta project by creating the .vendatta directory and default configuration files.`,
+	Short: "Initialize a new vendetta project",
+	Long:  `Initialize a new vendetta project by creating the .vendetta directory and default configuration files.`,
 	RunE: func(_ *cobra.Command, _ []string) error {
 		ctx := context.Background()
 		controller := createController()
@@ -131,7 +131,7 @@ var workspaceShellCmd = &cobra.Command{
 var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply latest configuration to agent configs",
-	Long:  `Apply the latest vendatta configuration to all enabled AI agent configuration files (Cursor, OpenCode, Claude, etc.).`,
+	Long:  `Apply the latest vendetta configuration to all enabled AI agent configuration files (Cursor, OpenCode, Claude, etc.).`,
 	RunE: func(_ *cobra.Command, _ []string) error {
 		ctx := context.Background()
 		controller := createController()
@@ -216,7 +216,7 @@ var usageBenchmarkCmd = &cobra.Command{
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage configuration",
-	Long:  `Manage Vendatta configuration files.`,
+	Long:  `Manage vendetta configuration files.`,
 }
 
 var configExtractCmd = &cobra.Command{
@@ -292,7 +292,7 @@ func createController() ctrl.Controller {
 	providers := []provider.Provider{dockerProv, lxcProv}
 
 	// Create worktree manager
-	wtManager := worktree.NewManager(".", ".vendatta/worktrees")
+	wtManager := worktree.NewManager(".", ".vendetta/worktrees")
 
 	// Create controller
 	return ctrl.NewBaseController(providers, wtManager)
@@ -303,7 +303,7 @@ func runUpdate() error {
 	fmt.Println("📦 Updating extends to latest versions...")
 
 	// Load config
-	cfg, err := config.LoadConfig(".vendatta/config.yaml")
+	cfg, err := config.LoadConfig(".vendetta/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}

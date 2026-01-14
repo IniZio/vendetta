@@ -22,7 +22,7 @@ type TestEnvironment struct {
 
 // NewTestEnvironment creates a new test environment
 func NewTestEnvironment(t *testing.T) *TestEnvironment {
-	tempDir, err := os.MkdirTemp("", "vendatta-e2e-*")
+	tempDir, err := os.MkdirTemp("", "vendetta-e2e-*")
 	require.NoError(t, err)
 
 	return &TestEnvironment{
@@ -34,7 +34,7 @@ func NewTestEnvironment(t *testing.T) *TestEnvironment {
 // Cleanup removes the test environment
 func (env *TestEnvironment) Cleanup() {
 	// Clean up docker containers
-	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=vendatta.session.id")
+	cmd := exec.Command("docker", "ps", "-q", "--filter", "label=vendetta.session.id")
 	if output, err := cmd.Output(); err == nil {
 		containerIDs := strings.Fields(string(output))
 		for _, id := range containerIDs {
@@ -83,13 +83,13 @@ func (env *TestEnvironment) CreateTestProject(t *testing.T, files map[string]str
 	return projectDir
 }
 
-// BuildVendattaBinary builds the vendatta binary for testing
-func (env *TestEnvironment) BuildVendattaBinary(t *testing.T) string {
+// BuildvendettaBinary builds the vendetta binary for testing
+func (env *TestEnvironment) BuildvendettaBinary(t *testing.T) string {
 	if env.binaryPath != "" {
 		return env.binaryPath
 	}
 
-	// Find the vendatta source directory by walking up from test executable
+	// Find the vendetta source directory by walking up from test executable
 	// until we find a directory containing go.mod
 	repoRoot := findRepoRoot(t)
 
@@ -120,8 +120,8 @@ func findRepoRoot(t *testing.T) string {
 	}
 }
 
-// RunVendattaCommand runs a vendatta command and returns the output
-func (env *TestEnvironment) RunVendattaCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
+// RunvendettaCommand runs a vendetta command and returns the output
+func (env *TestEnvironment) RunvendettaCommand(t *testing.T, binaryPath, projectDir string, args ...string) string {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
 
@@ -140,8 +140,8 @@ func (env *TestEnvironment) RunVendattaCommand(t *testing.T, binaryPath, project
 	return output
 }
 
-// RunVendattaCommandWithError runs a vendatta command and returns output and error
-func (env *TestEnvironment) RunVendattaCommandWithError(binaryPath, projectDir string, args ...string) (string, error) {
+// RunvendettaCommandWithError runs a vendetta command and returns output and error
+func (env *TestEnvironment) RunvendettaCommandWithError(binaryPath, projectDir string, args ...string) (string, error) {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = projectDir
 

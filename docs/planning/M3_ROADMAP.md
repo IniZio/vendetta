@@ -94,7 +94,7 @@ pkg/coordination/
 ├── dispatcher.go      # Universal provider dispatch
 └── ssh_manager.go     # SSH key handling & proxy
 
-cmd/vendatta/node.go    # Node management CLI
+cmd/vendetta/node.go    # Node management CLI
 ```
 
 ### Phase 2: Provider Completeness (Weeks 3-4)

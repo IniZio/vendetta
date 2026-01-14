@@ -16,9 +16,9 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/vibegear/vendatta/pkg/config"
-	"github.com/vibegear/vendatta/pkg/provider"
-	"github.com/vibegear/vendatta/pkg/transport"
+	"github.com/vibegear/vendetta/pkg/config"
+	"github.com/vibegear/vendetta/pkg/provider"
+	"github.com/vibegear/vendetta/pkg/transport"
 )
 
 // DockerClientInterface defines the methods needed by DockerProvider
@@ -283,7 +283,7 @@ func (p *DockerProvider) createLocal(ctx context.Context, sessionID string, work
 			exposedPorts[nat.Port(pStr)] = struct{}{}
 			portBindings[nat.Port(pStr)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", svc.Port)}}
 			url := fmt.Sprintf("http://localhost:%d", svc.Port)
-			env = append(env, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
+			env = append(env, fmt.Sprintf("vendetta_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
 
@@ -308,7 +308,7 @@ func (p *DockerProvider) createLocal(ctx context.Context, sessionID string, work
 		Tty:        true,
 		WorkingDir: "/workspace",
 		Labels: map[string]string{
-			"vendatta.session.id": sessionID,
+			"vendetta.session.id": sessionID,
 		},
 		Cmd:          []string{"/bin/bash"},
 		Env:          env,
@@ -327,7 +327,7 @@ func (p *DockerProvider) createLocal(ctx context.Context, sessionID string, work
 		Provider: p.Name(),
 		Status:   "created",
 		Labels: map[string]string{
-			"vendatta.session.id": sessionID,
+			"vendetta.session.id": sessionID,
 		},
 	}, nil
 }
@@ -347,7 +347,7 @@ func (p *DockerProvider) createRemote(ctx context.Context, sessionID string, wor
 			exposedPorts = append(exposedPorts, fmt.Sprintf("--expose=%d", svc.Port))
 			portBindings = append(portBindings, fmt.Sprintf("-p %d:%d", svc.Port, svc.Port))
 			url := fmt.Sprintf("http://localhost:%d", svc.Port)
-			env = append(env, fmt.Sprintf("-e VENDATTA_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
+			env = append(env, fmt.Sprintf("-e vendetta_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
 		}
 	}
 
@@ -392,7 +392,7 @@ func (p *DockerProvider) createRemote(ctx context.Context, sessionID string, wor
 		Provider: p.Name(),
 		Status:   "created",
 		Labels: map[string]string{
-			"vendatta.session.id": sessionID,
+			"vendetta.session.id": sessionID,
 		},
 	}, nil
 }
@@ -405,7 +405,7 @@ func (p *DockerProvider) listLocal(ctx context.Context) ([]provider.Session, err
 
 	var sessions []provider.Session
 	for _, c := range containers {
-		if id, ok := c.Labels["vendatta.session.id"]; ok {
+		if id, ok := c.Labels["vendetta.session.id"]; ok {
 			var sshPort int
 			services := make(map[string]int)
 			for _, port := range c.Ports {
@@ -422,7 +422,7 @@ func (p *DockerProvider) listLocal(ctx context.Context) ([]provider.Session, err
 				Status:   c.Status,
 				SSHPort:  sshPort,
 				Services: services,
-				Labels:   map[string]string{"vendatta.session.id": id},
+				Labels:   map[string]string{"vendetta.session.id": id},
 			})
 		}
 	}
@@ -442,7 +442,7 @@ func (p *DockerProvider) listRemote(ctx context.Context) ([]provider.Session, er
 	defer t.Disconnect(ctx)
 
 	result, err := t.Execute(ctx, &transport.Command{
-		Cmd:           []string{"docker", "ps", "-a", "--filter", "label=vendatta.session.id", "--format", "{{.ID}}\t{{.Status}}\t{{.Labels}}"},
+		Cmd:           []string{"docker", "ps", "-a", "--filter", "label=vendetta.session.id", "--format", "{{.ID}}\t{{.Status}}\t{{.Labels}}"},
 		CaptureOutput: true,
 	})
 	if err != nil {
@@ -466,7 +466,7 @@ func (p *DockerProvider) listRemote(ctx context.Context) ([]provider.Session, er
 					ID:       containerID,
 					Provider: p.Name(),
 					Status:   status,
-					Labels:   map[string]string{"vendatta.session.id": sessionID},
+					Labels:   map[string]string{"vendetta.session.id": sessionID},
 				})
 			}
 		}
@@ -477,8 +477,8 @@ func (p *DockerProvider) listRemote(ctx context.Context) ([]provider.Session, er
 func (p *DockerProvider) extractSessionID(labels string) string {
 	for _, part := range strings.Split(labels, ",") {
 		part = strings.TrimSpace(part)
-		if strings.HasPrefix(part, "vendatta.session.id=") {
-			return strings.TrimPrefix(part, "vendatta.session.id=")
+		if strings.HasPrefix(part, "vendetta.session.id=") {
+			return strings.TrimPrefix(part, "vendetta.session.id=")
 		}
 	}
 	return ""

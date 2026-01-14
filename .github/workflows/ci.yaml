@@ -42,8 +42,8 @@ jobs:
            sudo systemctl start docker
            docker version
 
-       # Build vendatta binary for testing
-       - name: Build vendatta
+       # Build vendetta binary for testing
+       - name: Build vendetta
          run: make build
 
        # Run e2e tests

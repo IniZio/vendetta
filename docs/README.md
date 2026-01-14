@@ -1,6 +1,6 @@
 # Documentation Structure
 
-This directory contains the complete documentation for the Vendatta project.
+This directory contains the complete documentation for the vendetta project.
 
 ## Overview
 

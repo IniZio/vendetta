@@ -1,4 +1,4 @@
-# Vendatta
+# vendetta
 
 **Isolated development environments that work with AI agents**
 
@@ -16,7 +16,7 @@ Eliminate "it works on my machine" by providing reproducible dev environments th
 
 ```bash
 # Install (single binary, no dependencies)
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
 
 # Initialize in your project
 vendetta init
@@ -37,14 +37,14 @@ vendetta workspace create my-feature && vendetta workspace up my-feature
 
 **Installation & Setup:**
 ```bash
-# Install Vendatta
-curl -fsSL https://raw.githubusercontent.com/IniZio/vendatta/main/install.sh | bash
+# Install vendetta
+curl -fsSL https://raw.githubusercontent.com/IniZio/vendetta/main/install.sh | bash
 
 # Initialize project
 vendetta init
 
 # Configure services
-cat .vendatta/config.yaml
+cat .vendetta/config.yaml
 ```
 
 **Create Multiple Workspaces:**
@@ -64,14 +64,14 @@ vendetta workspace up feature/payments
 docker ps
 
 # Output shows:
-# vendatta-demo-project-feature-auth (port 8080)
-# vendatta-demo-project-feature-payments (port 8081)
+# vendetta-demo-project-feature-auth (port 8080)
+# vendetta-demo-project-feature-payments (port 8081)
 ```
 
 **Git Workflow:**
 ```bash
 # Work in each workspace
-cd .vendatta/worktrees/feature/auth
+cd .vendetta/worktrees/feature/auth
 git add .
 git commit -m "Add auth feature"
 
@@ -97,14 +97,14 @@ vendetta workspace rm feature/payments
 ### Understanding What Happened
 
 - **Step 1**: Built a single Go binary that manages everything
-- **Step 2**: Created a `.vendatta/` directory with basic configuration and hook templates
+- **Step 2**: Created a `.vendetta/` directory with basic configuration and hook templates
 - **Step 3**: Created a workspace with branch, worktree, agent configs, and started the isolated environment
 
 Your AI agents (Cursor, OpenCode, etc.) are now automatically configured to work with this isolated workspace.
 
 ### Configure for Your Project
 
-Vendatta works with your existing development setup. Edit `.vendatta/config.yaml` to define your services:
+vendetta works with your existing development setup. Edit `.vendetta/config.yaml` to define your services:
 
 ```yaml
 # Example: Full-stack web app
@@ -125,13 +125,13 @@ Run `vendetta workspace create my-feature && vendetta workspace up my-feature` t
 
 ## ⚙️ Configuration
 
-Configure your development environment in `.vendatta/config.yaml`:
+Configure your development environment in `.vendetta/config.yaml`:
 
 ```yaml
 name: "my-fullstack-app"
 
 extends:
-  - inizio/vendatta-config-inizio
+  - inizio/vendetta-config-inizio
 
 plugins:
   - golang
@@ -145,7 +145,7 @@ services:
 
 All capabilities from loaded plugins are automatically enabled!
 
-User-specific settings are auto-detected and stored in `~/.config/vendatta/config.yaml`:
+User-specific settings are auto-detected and stored in `~/.config/vendetta/config.yaml`:
 
 ```yaml
 provider: "docker"  # Preferred container provider
@@ -202,10 +202,10 @@ vendetta workspace create my-feature --node my-node
 **Service Discovery**: Automatic environment variables for service URLs
 ```bash
 # In your worktree
-env | grep VENDATTA_SERVICE
-# VENDATTA_SERVICE_DB_URL=postgresql://localhost:5432
-# VENDATTA_SERVICE_API_URL=http://localhost:5000
-# VENDATTA_SERVICE_WEB_URL=http://localhost:3000
+env | grep vendetta_SERVICE
+# vendetta_SERVICE_DB_URL=postgresql://localhost:5432
+# vendetta_SERVICE_API_URL=http://localhost:5000
+# vendetta_SERVICE_WEB_URL=http://localhost:3000
 ```
 
 **AI Agent Integration**: Automatically configures Cursor, OpenCode, and Claude agents for isolated development

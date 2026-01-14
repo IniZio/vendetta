@@ -150,7 +150,7 @@ docs/
 - [x] In-memory node registry (extensible design)
 - [x] Real-time status updates (SSE/WebSocket)
 - [x] Authentication via JWT tokens
-- [x] Configuration loaded from `.vendatta/coordination.yaml`
+- [x] Configuration loaded from `.vendetta/coordination.yaml`
 
 ### ✅ Integration Points
 - [x] Integrates with existing configuration system

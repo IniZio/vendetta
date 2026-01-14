@@ -1,4 +1,4 @@
-module github.com/vibegear/vendatta
+module github.com/vibegear/vendetta
 
 go 1.24.0
 

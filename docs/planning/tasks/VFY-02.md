@@ -38,13 +38,13 @@ type TestEnvironment struct {
     t           *testing.T
     baseDir     string
     gitRepoDir  string
-    vendattaBin string
+    vendettaBin string
     containers  []string  // Track for cleanup
 }
 
 // Setup helpers
 func (te *TestEnvironment) InitGitRepo() error
-func (te *TestEnvironment) RunVendatta(args ...string) (string, error)
+func (te *TestEnvironment) Runvendetta(args ...string) (string, error)
 func (te *TestEnvironment) CreateWorkspace(name string) error
 func (te *TestEnvironment) StartWorkspace(name string) error
 func (te *TestEnvironment) Cleanup() error
@@ -75,7 +75,7 @@ func TestWorkspaceLifecycle(t *testing.T) {
     defer te.Cleanup()
 
     // Initialize project
-    te.RunVendatta("init")
+    te.Runvendetta("init")
 
     // Create workspace
     te.CreateWorkspace("test-feature")
@@ -89,14 +89,14 @@ func TestWorkspaceLifecycle(t *testing.T) {
 
     // Test context awareness
     te.ChangeDirToWorktree("test-feature")
-    te.RunVendatta("workspace", "up") // Should work without name
+    te.Runvendetta("workspace", "up") // Should work without name
 
     // Stop and cleanup
-    te.RunVendatta("workspace", "down", "test-feature")
+    te.Runvendetta("workspace", "down", "test-feature")
     assertContainerStopped(t, "test-feature")
 
     // Remove workspace
-    te.RunVendatta("workspace", "rm", "test-feature")
+    te.Runvendetta("workspace", "rm", "test-feature")
     assertWorktreeRemoved(t, "test-feature")
 }
 ```
@@ -121,9 +121,9 @@ services:
     te.StartWorkspace("discovery-test")
 
     // Verify environment variables
-    output := te.ExecInContainer("env | grep VENDATTA_SERVICE")
-    assert.Contains(t, output, "VENDATTA_SERVICE_WEB_URL=http://localhost:3000")
-    assert.Contains(t, output, "VENDATTA_SERVICE_API_URL=http://localhost:8080")
+    output := te.ExecInContainer("env | grep vendetta_SERVICE")
+    assert.Contains(t, output, "vendetta_SERVICE_WEB_URL=http://localhost:3000")
+    assert.Contains(t, output, "vendetta_SERVICE_API_URL=http://localhost:8080")
 }
 ```
 
@@ -134,16 +134,16 @@ func TestAgentConfiguration(t *testing.T) {
     defer te.Cleanup()
 
     // Create overrides
-    te.WriteFile(".vendatta/agents/cursor/rules/custom.md", "# Custom rules")
-    te.WriteFile(".vendatta/agents/cursor/rules/suppress.md", "") // Empty = suppress
+    te.WriteFile(".vendetta/agents/cursor/rules/custom.md", "# Custom rules")
+    te.WriteFile(".vendetta/agents/cursor/rules/suppress.md", "") // Empty = suppress
 
     // Create workspace
     te.CreateWorkspace("agent-test")
 
     // Verify generated configs
-    assertFileExists(t, ".vendatta/worktrees/agent-test/.cursor/rules/custom.md")
-    assertFileNotExists(t, ".vendatta/worktrees/agent-test/.cursor/rules/suppress.md")
-    assertMCPConfigValid(t, ".vendatta/worktrees/agent-test/.cursor/mcp.json")
+    assertFileExists(t, ".vendetta/worktrees/agent-test/.cursor/rules/custom.md")
+    assertFileNotExists(t, ".vendetta/worktrees/agent-test/.cursor/rules/suppress.md")
+    assertMCPConfigValid(t, ".vendetta/worktrees/agent-test/.cursor/mcp.json")
 }
 ```
 
@@ -154,13 +154,13 @@ func TestHookSystem(t *testing.T) {
     defer te.Cleanup()
 
     // Create hooks
-    te.WriteExecutableFile(".vendatta/hooks/create.sh", `
+    te.WriteExecutableFile(".vendetta/hooks/create.sh", `
 #!/bin/bash
 echo "Create hook executed: $WORKSPACE_NAME" >> /tmp/hook.log
 `)
-    te.WriteExecutableFile(".vendatta/hooks/up.sh", `
+    te.WriteExecutableFile(".vendetta/hooks/up.sh", `
 #!/bin/bash
-echo "Up hook executed: $VENDATTA_SERVICE_WEB_URL" >> /tmp/hook.log
+echo "Up hook executed: $vendetta_SERVICE_WEB_URL" >> /tmp/hook.log
 `)
 
     // Execute lifecycle

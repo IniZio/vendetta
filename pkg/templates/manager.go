@@ -165,7 +165,7 @@ func (m *Manager) PullWithoutUpdate(repo TemplateRepo) error {
 }
 
 // PullWithUpdate explicitly updates a repository from remote.
-// Used by 'vendatta update' to fetch latest changes.
+// Used by 'vendetta update' to fetch latest changes.
 func (m *Manager) PullWithUpdate(repo TemplateRepo) error {
 	repoName := extractRepoName(repo.URL)
 	repoDir := m.GetRepoDir(repoName)

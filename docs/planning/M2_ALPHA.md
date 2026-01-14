@@ -1,10 +1,10 @@
 # Milestone: M2_Alpha (Namespaced Plugins & Determinism)
 
-**Objective**: Transition Vendatta into a modular, plugin-based platform with hierarchical discovery and `uv`-style version locking. This phase focuses on developer experience, parallel performance, and environment reproducibility.
+**Objective**: Transition vendetta into a modular, plugin-based platform with hierarchical discovery and `uv`-style version locking. This phase focuses on developer experience, parallel performance, and environment reproducibility.
 
 ## 🎯 Success Criteria
 - [x] `pkg/plugins` registry implements hierarchical discovery and DAG resolution.
-- [x] `vendatta.lock` ensures deterministic environment recreation across machines.
+- [x] `vendetta.lock` ensures deterministic environment recreation across machines.
 - [x] Remote plugins are fetched in parallel with 0 resolution overhead during workspace creation.
 - [x] Agents receive namespaced capabilities (Rules, Skills, Commands).
 - [ ] E2E test suite with 90%+ coverage and performance benchmarks (<30s startup, <500MB memory).
@@ -12,7 +12,7 @@
 - [ ] Standardized Makefile with CI integration.
 - [ ] Config extraction to plugins command for simplified sharing.
 - [ ] LXC provider implementation as lightweight alternative to Docker.
-- [ ] Standard config moved to `git@github.com:IniZio/vendatta-config.git`.
+- [ ] Standard config moved to `git@github.com:IniZio/vendetta-config.git`.
 
 ## 🛠 Implementation Tasks
 
@@ -20,7 +20,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **PLG-01** | Plugin Registry & DAG Resolver | 🔥 High | [✅ Completed] | [TP-PLG-01](#test-plan-plg-01) |
 | **LCK-01** | Lockfile Manager (uv-style) | 🔥 High | [✅ Completed] | [TP-LCK-01](#test-plan-lck-01) |
-| **CLI-04** | `vendatta plugin` Command Group | ⚡ Med | [✅ Completed] | [TP-CLI-04](#test-plan-cli-04) |
+| **CLI-04** | `vendetta plugin` Command Group | ⚡ Med | [✅ Completed] | [TP-CLI-04](#test-plan-cli-04) |
 | **AGT-03** | Namespaced Agent Generation | ⚡ Med | [✅ Completed] | [TP-AGT-03](#test-plan-agt-03) |
 | **VFY-02** | E2E Test Suite & Coverage | 🔥 High | [🚧 Pending] | [TP-VFY-02](#test-plan-vfy-02) |
 | **SCH-01** | JSON Schema Validation | ⚡ Med | [✅ Completed] | [TP-SCH-01](#test-plan-sch-01) |
@@ -41,14 +41,14 @@
 **Objective**: Ensure modular plugins are correctly discovered, namespaced, and resolved without cycles.
 
 **Unit Tests:**
-- ✅ **Recursive Discovery**: Verify plugins are found at various depths in `.vendatta/plugins/`.
+- ✅ **Recursive Discovery**: Verify plugins are found at various depths in `.vendetta/plugins/`.
 - ✅ **Namespace Isolation**: Ensure rules from `plugin-a` don't leak into `plugin-b`.
 - ✅ **DAG Resolution**: Verify correct loading order for dependent plugins.
 - ✅ **Cycle Detection**: Fail explicitly when A -> B -> A dependency exists.
 
 **Integration Tests:**
 - ✅ **Merge Logic**: Verify that namespaced rules are correctly merged into final agent configs.
-- ✅ **Local Overrides**: Project-specific plugins at `.vendatta/plugins/` take precedence over remote ones.
+- ✅ **Local Overrides**: Project-specific plugins at `.vendetta/plugins/` take precedence over remote ones.
 
 ---
 
@@ -56,7 +56,7 @@
 **Objective**: Validate deterministic behavior and parallel performance.
 
 **Unit Tests:**
-- ✅ **Lockfile Generation**: Ensure `vendatta.lock` captures exact SHAs for all remotes.
+- ✅ **Lockfile Generation**: Ensure `vendetta.lock` captures exact SHAs for all remotes.
 - ✅ **Integrity Checks**: Verify that tampering with a plugin's manifest triggers a lock mismatch.
 - ✅ **Idempotency**: `workspace create` produces identical results when run twice with the same lockfile.
 
@@ -73,7 +73,7 @@
 ```bash
 # Test 1: Namespaced Rules in Cursor
 # 1. Add plugin 'vibegear/git' and 'local/verification'
-# 2. Run 'vendatta workspace create test-workspace'
+# 2. Run 'vendetta workspace create test-workspace'
 # 3. Verify: .cursor/rules/git_commit.mdc exists
 # 4. Verify: .cursor/rules/verification_strict.mdc exists
 # 5. Verify: NO collisions between similarly named rules in different plugins
@@ -114,7 +114,7 @@
 **Requirements:**
 - Reference implementation from https://github.com/authgear/authgear-server for automatic schema generation
 - Export final schema file from Go structs without hand-crafting
-- Populate https://github.com/IniZio/vendatta-config with generic sharable plugins
+- Populate https://github.com/IniZio/vendetta-config with generic sharable plugins
 - Note: Unlike eslint, plugins are OFF by default (opt-in), not ON by default
 
 **Unit Tests:**
@@ -124,8 +124,8 @@
 
 **Integration Tests:**
 - ✅ **IDE Support**: VSCode/Cursor intellisense works with auto-generated schema
-- ✅ **CLI Validation**: `vendatta config validate` command works
-- ✅ **Plugin Registry**: Generic plugins available from vendatta-config repo
+- ✅ **CLI Validation**: `vendetta config validate` command works
+- ✅ **Plugin Registry**: Generic plugins available from vendetta-config repo
 
 ---
 
@@ -157,23 +157,23 @@ make fmt            # Code properly formatted
 ---
 
 ### **TP-CFG-02: Config Extraction to Plugins**
-**Objective**: Simplify sharing by extracting local .vendatta/ configurations (rules, skills, commands) into dedicated plugins for easy distribution and reuse.
+**Objective**: Simplify sharing by extracting local .vendetta/ configurations (rules, skills, commands) into dedicated plugins for easy distribution and reuse.
 
 **Requirements:**
-- Extract custom rules, skills, and commands from .vendatta/templates/ and .vendatta/agents/
+- Extract custom rules, skills, and commands from .vendetta/templates/ and .vendetta/agents/
 - Generate proper plugin manifest with metadata (name, version, description, author)
 - Create namespace to avoid conflicts (e.g., 'team-standards' plugin)
 - Allow selective extraction (rules only, skills only, or all)
 - Preserve local overrides after extraction
 
 **Unit Tests:**
-- ✅ **Extraction Logic**: Convert .vendatta/ directory structure to plugin format
+- ✅ **Extraction Logic**: Convert .vendetta/ directory structure to plugin format
 - ✅ **Plugin Generation**: Create plugin.yaml manifest and organized file structure
 - ✅ **Namespace Handling**: Ensure extracted plugins have unique namespaces
 - ✅ **Selective Extraction**: Extract specific config types (rules/skills/commands)
 
 **Integration Tests:**
-- ✅ **CLI Command**: `vendatta config extract --plugin-name my-plugin [--rules|--skills|--commands]`
+- ✅ **CLI Command**: `vendetta config extract --plugin-name my-plugin [--rules|--skills|--commands]`
 - ✅ **Plugin Installation**: Extracted plugin can be installed via plugin registry
 - ✅ **Override Preservation**: Local customizations remain after extraction
 - ✅ **Sharing Workflow**: Extracted plugin can be committed and shared via git
@@ -181,11 +181,11 @@ make fmt            # Code properly formatted
 **E2E Scenarios:**
 ```bash
 # Test 1: Extract Team Coding Standards
-# 1. Add custom rules to .vendatta/templates/rules/ and .vendatta/agents/cursor/rules/
-# 2. Run 'vendatta config extract --plugin-name team-standards --rules'
-# 3. Verify plugin created in .vendatta/plugins/team-standards/ with manifest
+# 1. Add custom rules to .vendetta/templates/rules/ and .vendetta/agents/cursor/rules/
+# 2. Run 'vendetta config extract --plugin-name team-standards --rules'
+# 3. Verify plugin created in .vendetta/plugins/team-standards/ with manifest
 # 4. Commit plugin to team repo and share with colleagues
-# 5. Colleagues can install via 'vendatta plugin install https://github.com/team/configs'
+# 5. Colleagues can install via 'vendetta plugin install https://github.com/team/configs'
 # Expected: Team standards propagate without manual config syncing
 ```
 
@@ -208,7 +208,7 @@ make fmt            # Code properly formatted
 **E2E Scenarios:**
 ```bash
 # Test 1: LXC Workspace Creation
-# 1. Run 'vendatta workspace create test --provider lxc'
+# 1. Run 'vendetta workspace create test --provider lxc'
 # 2. Verify LXC container starts with proper networking
 # 3. Install dependencies and run services
 # 4. Test faster startup compared to Docker
@@ -220,12 +220,12 @@ make fmt            # Code properly formatted
 ## 🏗 Infrastructure Requirements (for handover)
 
 ### **CI Integration**
-- **Artifact Locking**: CI must run `vendatta plugin check` to ensure the lockfile is up-to-date with `config.yaml`.
+- **Artifact Locking**: CI must run `vendetta plugin check` to ensure the lockfile is up-to-date with `config.yaml`.
 - **Benchmarking**: Monitor workspace creation time to ensure parallel fetching remains < 10s for 5+ remote plugins.
 
 ### **Handover Guidelines**
 - **Follow TDD**: All logic in `pkg/plugins` and `pkg/lock` must have 90%+ unit test coverage.
 - **Mock Git**: Use `testify/mock` to simulate git remote operations in integration tests.
-- **Standard Repo**: Populate `git@github.com:IniZio/vendatta-config.git` with generic sharable plugins (coding standards, development tools, framework-specific rules).
+- **Standard Repo**: Populate `git@github.com:IniZio/vendetta-config.git` with generic sharable plugins (coding standards, development tools, framework-specific rules).
 - **Plugin Philosophy**: Plugins are OFF by default (opt-in) - unlike eslint, users must explicitly enable plugins to avoid unexpected behavior.
 - **Config Extraction**: Use CFG-02 for sharing team standards instead of complex remote syncing.

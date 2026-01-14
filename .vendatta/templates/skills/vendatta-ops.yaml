@@ -1,5 +1,5 @@
-name: vendatta-ops
-description: Vendatta workspace management operations
+name: vendetta-ops
+description: vendetta workspace management operations
 capabilities:
   - workspace_create: Create new isolated workspaces
   - workspace_up: Start workspace environment

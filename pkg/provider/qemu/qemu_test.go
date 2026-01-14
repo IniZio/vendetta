@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vibegear/vendatta/pkg/config"
-	"github.com/vibegear/vendatta/pkg/provider"
+	"github.com/vibegear/vendetta/pkg/config"
+	"github.com/vibegear/vendetta/pkg/provider"
 )
 
 // mockExecCommand allows mocking exec.CommandContext
@@ -110,8 +110,8 @@ func TestQEMUProvider_Create_Success(t *testing.T) {
 	assert.Len(t, session.Services, 2)
 	assert.Equal(t, 8080, session.Services["web"])
 	assert.Equal(t, 3000, session.Services["api"])
-	assert.Contains(t, session.Labels, "vendatta.session.id")
-	assert.Equal(t, sessionID, session.Labels["vendatta.session.id"])
+	assert.Contains(t, session.Labels, "vendetta.session.id")
+	assert.Equal(t, sessionID, session.Labels["vendetta.session.id"])
 
 	// Cleanup
 	_ = p.Destroy(ctx, sessionID)
@@ -433,7 +433,7 @@ func TestQEMUProvider_List_WithVMs(t *testing.T) {
 			found = true
 			assert.Equal(t, "qemu", s.Provider)
 			assert.Equal(t, "running", s.Status)
-			assert.Contains(t, s.Labels, "vendatta.session.id")
+			assert.Contains(t, s.Labels, "vendetta.session.id")
 			break
 		}
 	}
@@ -584,7 +584,7 @@ func TestQEMUProvider_SessionStruct(t *testing.T) {
 			"api": 3000,
 		},
 		Labels: map[string]string{
-			"vendatta.session.id": "session-123",
+			"vendetta.session.id": "session-123",
 			"qemu.disk.path":      "/path/to/disk.img",
 		},
 	}

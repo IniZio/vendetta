@@ -4,13 +4,13 @@
 **Status**: [Completed]
 
 ## 🎯 Objective
-Implement convention-based hooks as the main operations in `.vendatta/hooks/` directory, allowing users to customize workspace behavior with full environment variable access.
+Implement convention-based hooks as the main operations in `.vendetta/hooks/` directory, allowing users to customize workspace behavior with full environment variable access.
 
 ## 🛠 Implementation Details
 
 ### **Hook Directory Structure**
 ```
-.vendatta/hooks/
+.vendetta/hooks/
 ├── create.sh     # Executed during workspace create
 ├── up.sh         # Executed during workspace up
 ├── stop.sh       # Executed during workspace stop
@@ -27,14 +27,14 @@ Implement convention-based hooks as the main operations in `.vendatta/hooks/` di
 ### **Hook Execution Points**
 ```go
 // During workspace create - runs instead of default create logic
-if createHook := filepath.Join(".vendatta", "hooks", "create.sh"); fileExists(createHook) {
+if createHook := filepath.Join(".vendetta", "hooks", "create.sh"); fileExists(createHook) {
     executeHook(createHook, envVars)
 } else {
     // Default create behavior
 }
 
 // During workspace up - runs instead of default service startup
-if upHook := filepath.Join(".vendatta", "hooks", "up.sh"); fileExists(upHook) {
+if upHook := filepath.Join(".vendetta", "hooks", "up.sh"); fileExists(upHook) {
     executeHook(upHook, envVars)
 } else {
     // Default up behavior (docker-compose, etc.)
@@ -42,7 +42,7 @@ if upHook := filepath.Join(".vendatta", "hooks", "up.sh"); fileExists(upHook) {
 ```
 
 ### **Hook Environment**
-Hooks receive all `VENDATTA_SERVICE_*_URL` environment variables plus:
+Hooks receive all `vendetta_SERVICE_*_URL` environment variables plus:
 - `WORKSPACE_NAME`: Name of the current workspace
 - `WORKTREE_PATH`: Absolute path to the worktree
 - `CONTAINER_ID`: Docker container ID (when available)
@@ -67,21 +67,21 @@ Hooks receive all `VENDATTA_SERVICE_*_URL` environment variables plus:
 ### **E2E Scenarios**
 ```bash
 # Test hook execution
-vendatta workspace create hooks-demo
+vendetta workspace create hooks-demo
 
 # Create hook as main operation
-cat > .vendatta/hooks/up.sh << 'EOF'
+cat > .vendetta/hooks/up.sh << 'EOF'
 #!/bin/bash
 echo "Custom startup for $WORKSPACE_NAME"
-echo "Web URL: $VENDATTA_SERVICE_WEB_URL"
+echo "Web URL: $vendetta_SERVICE_WEB_URL"
 docker-compose up -d  # Custom logic
 npm run dev &         # Custom dev server
 EOF
 
-chmod +x .vendatta/hooks/up.sh
+chmod +x .vendetta/hooks/up.sh
 
 # Execute workspace up - hook replaces default behavior
-vendatta workspace up hooks-demo
+vendetta workspace up hooks-demo
 
 # Verify hook executed as main operation
 # Check docker-compose started via hook

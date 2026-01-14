@@ -9,7 +9,7 @@ The Agent Configuration system generates appropriate configuration files for AI 
 
 ### **Template Architecture**
 ```
-.vendatta/
+.vendetta/
 ├── config.yaml                 # Main configuration
 ├── templates/                  # Shared templates (open standards)
 │   ├── skills/                 # agentskills.io compliant
@@ -32,20 +32,20 @@ The Agent Configuration system generates appropriate configuration files for AI 
 ```
 
 ### **Generation Process**
-1. **Base Templates**: Start with built-in defaults from `.vendatta/templates/`
-2. **Remote Templates**: Merge with templates from `vendatta config pull` sources
-3. **Project Overrides**: Apply file-level overrides from `.vendatta/agents/{agent}/`
+1. **Base Templates**: Start with built-in defaults from `.vendetta/templates/`
+2. **Remote Templates**: Merge with templates from `vendetta config pull` sources
+3. **Project Overrides**: Apply file-level overrides from `.vendetta/agents/{agent}/`
 4. **Suppression Check**: Skip generation for rules/skills with empty override files
 5. **Generate Configs**: Create final agent configurations in worktree directories
 
 ### **Override Mechanism**
-- **Override**: Place a file in `.vendatta/agents/{agent}/rules/` or `skills/` to replace the base template
+- **Override**: Place a file in `.vendetta/agents/{agent}/rules/` or `skills/` to replace the base template
 - **Suppression**: Create an empty file with the same name to prevent that rule/skill from being generated
-- **Example**: Empty `.vendatta/agents/cursor/rules/legacy-code.md` prevents legacy-code rule generation
+- **Example**: Empty `.vendetta/agents/cursor/rules/legacy-code.md` prevents legacy-code rule generation
 
 ### **File Resolution Priority**
-1. **Project Override**: `.vendatta/agents/cursor/rules/custom.md` (highest priority)
-2. **Remote Template**: From `vendatta config pull` sources
+1. **Project Override**: `.vendetta/agents/cursor/rules/custom.md` (highest priority)
+2. **Remote Template**: From `vendetta config pull` sources
 3. **Base Template**: Built-in defaults (lowest priority)
 
 ### **Supported Agents**
@@ -79,7 +79,7 @@ YAML with steps, environment variables, and metadata.
 ## 6. Configuration Example
 
 ```yaml
-# .vendatta/config.yaml
+# .vendetta/config.yaml
 name: my-project
 agents:
   - name: opencode

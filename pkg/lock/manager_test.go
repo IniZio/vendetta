@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vibegear/vendatta/pkg/plugins"
+	"github.com/vibegear/vendetta/pkg/plugins"
 )
 
 func TestManager_GenerateLockfile(t *testing.T) {
@@ -76,7 +76,7 @@ func TestManager_SaveLoadLockfile(t *testing.T) {
 		Metadata: LockMetadata{
 			ContentHash: "hash123",
 			Timestamp:   time.Now().Format(time.RFC3339),
-			Generator:   "vendatta",
+			Generator:   "vendetta",
 		},
 	}
 

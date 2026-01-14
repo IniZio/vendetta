@@ -1,11 +1,11 @@
-# Vendatta - Development Environment Manager
+# vendetta - Development Environment Manager
 # Makefile for development, testing, and CI workflows
 
 .PHONY: help build install clean test test-unit test-integration test-e2e test-all lint fmt fmt-check docker-build docker-push release
 
 # Default target
 help: ## Show this help message
-	@echo "Vendatta Development Makefile"
+	@echo "vendetta Development Makefile"
 	@echo ""
 	@echo "Development targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
@@ -22,12 +22,12 @@ help: ## Show this help message
 	@echo "  ci-docker          Build and push Docker image"
 
 # Development
-build: ## Build vendatta binary
-	go build -o bin/vendatta ./cmd/vendatta
+build: ## Build vendetta binary
+	go build -o bin/vendetta ./cmd/vendetta
 
-install: build ## Install vendatta to ~/.local/bin
-	cp bin/vendatta ~/.local/bin/vendatta
-	chmod +x ~/.local/bin/vendatta
+install: build ## Install vendetta to ~/.local/bin
+	cp bin/vendetta ~/.local/bin/vendetta
+	chmod +x ~/.local/bin/vendetta
 
 clean: ## Clean build artifacts
 	rm -rf bin/
@@ -64,22 +64,22 @@ test-all: test-unit test-integration test-e2e ## Run all tests
 
 # Docker
 docker-build: ## Build Docker image
-	docker build -t vendatta:latest .
+	docker build -t vendetta:latest .
 
 docker-push: ## Push Docker image
-	docker tag vendatta:latest inizio/vendatta:latest
-	docker push inizio/vendatta:latest
+	docker tag vendetta:latest inizio/vendetta:latest
+	docker push inizio/vendetta:latest
 
 # CI Pipeline
 ci-check: fmt-check lint test-all ## Run all CI checks
 
 ci-build: ## Build for multiple platforms
 	mkdir -p dist
-	GOOS=linux GOARCH=amd64 go build -o dist/vendatta-linux-amd64 ./cmd/vendatta
-	GOOS=linux GOARCH=arm64 go build -o dist/vendatta-linux-arm64 ./cmd/vendatta
-	GOOS=darwin GOARCH=amd64 go build -o dist/vendatta-darwin-amd64 ./cmd/vendatta
-	GOOS=darwin GOARCH=arm64 go build -o dist/vendatta-darwin-arm64 ./cmd/vendatta
-	GOOS=windows GOARCH=amd64 go build -o dist/vendatta-windows-amd64.exe ./cmd/vendatta
+	GOOS=linux GOARCH=amd64 go build -o dist/vendetta-linux-amd64 ./cmd/vendetta
+	GOOS=linux GOARCH=arm64 go build -o dist/vendetta-linux-arm64 ./cmd/vendetta
+	GOOS=darwin GOARCH=amd64 go build -o dist/vendetta-darwin-amd64 ./cmd/vendetta
+	GOOS=darwin GOARCH=arm64 go build -o dist/vendetta-darwin-arm64 ./cmd/vendetta
+	GOOS=windows GOARCH=amd64 go build -o dist/vendetta-windows-amd64.exe ./cmd/vendetta
 
 ci-docker: docker-build docker-push ## Build and push Docker image
 

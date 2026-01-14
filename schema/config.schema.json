@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/IniZio/vendatta/main/schema/config.schema.json",
-  "title": "Vendatta Configuration Schema",
-  "description": "Schema for .vendatta/config.yaml configuration files",
+  "$id": "https://raw.githubusercontent.com/IniZio/vendetta/main/schema/config.schema.json",
+  "title": "vendetta Configuration Schema",
+  "description": "Schema for .vendetta/config.yaml configuration files",
   "type": "object",
   "properties": {
     "name": {
@@ -35,7 +35,7 @@
     },
     "sync_targets": {
       "type": "array",
-      "description": "Remote repositories to sync .vendatta directory to",
+      "description": "Remote repositories to sync .vendetta directory to",
       "items": {
         "$ref": "#/definitions/remote"
       }

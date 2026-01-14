@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vibegear/vendatta/cmd/internal"
+	"github.com/vibegear/vendetta/cmd/internal"
 )
 
 func TestExtractConfigToPlugin(t *testing.T) {
@@ -14,11 +14,11 @@ func TestExtractConfigToPlugin(t *testing.T) {
 	testDir := t.TempDir()
 
 	// Create source directories and files
-	rulesDir := testDir + "/.vendatta/templates/rules"
+	rulesDir := testDir + "/.vendetta/templates/rules"
 	require.NoError(t, os.MkdirAll(rulesDir, 0755))
 	require.NoError(t, os.WriteFile(rulesDir+"/team-standards.md", []byte("# Team Standards\n- Use Go"), 0644))
 
-	skillsDir := testDir + "/.vendatta/templates/skills"
+	skillsDir := testDir + "/.vendetta/templates/skills"
 	require.NoError(t, os.MkdirAll(skillsDir, 0755))
 	require.NoError(t, os.WriteFile(skillsDir+"/code-review.yaml", []byte("name: code-review\ndescription: Review code"), 0644))
 
@@ -33,7 +33,7 @@ func TestExtractConfigToPlugin(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify plugin was created
-	pluginDir := ".vendatta/plugins/team-config"
+	pluginDir := ".vendetta/plugins/team-config"
 	assert.DirExists(t, pluginDir)
 	assert.FileExists(t, pluginDir+"/plugin.yaml")
 	assert.FileExists(t, pluginDir+"/rules/team-standards.md")

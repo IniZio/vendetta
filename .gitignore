@@ -7,8 +7,8 @@ coverage*.out
 coverage.html
 # Dependencies
 node_modules/
-# Vendatta artifacts
-.vendatta/worktrees/
+# vendetta artifacts
+.vendetta/worktrees/
 .cursor/
 .opencode/
 claude_desktop_config.json
@@ -23,7 +23,7 @@ opencode.json
 .DS_Store
 Thumbs.db
 AGENTS.md
-example/.vendatta/remotes/
+example/.vendetta/remotes/
 # Session and temporary files
 .sisyphus/
 # Examples directory (separate git project)

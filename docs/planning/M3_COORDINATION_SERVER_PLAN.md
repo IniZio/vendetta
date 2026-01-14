@@ -293,7 +293,7 @@ func (rdp *RemoteDockerProvider) ExecuteRemotely(ctx context.Context, conn *ssh.
 
 **Files to Create**:
 ```go
-// cmd/vendatta/node.go
+// cmd/vendetta/node.go
 var nodeCmd = &cobra.Command{
     Use:   "node",
     Short: "Manage remote nodes",
@@ -670,7 +670,7 @@ func (ks *FileKeyStore) storeKeySecurely(keyPair *KeyPair) error {
 // Secure SSH configuration
 func (sm *SSHManager) createSecureSSHConfig() *ssh.ClientConfig {
     return &ssh.ClientConfig{
-        User: "vendatta",
+        User: "vendetta",
         Auth: []ssh.AuthMethod{
             ssh.PublicKeys(sm.privateKey),
         },

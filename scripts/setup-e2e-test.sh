@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🚀 Setting up Vendatta E2E Test Environment"
+echo "🚀 Setting up vendetta E2E Test Environment"
 
 # Check prerequisites
 echo "📋 Checking prerequisites..."
@@ -15,7 +15,7 @@ command -v go >/dev/null 2>&1 || { echo "❌ Go is required but not installed. A
 echo "✅ Prerequisites check passed"
 
 # Create test directories
-TEST_ROOT="/tmp/vendatta-e2e-$(date +%s)"
+TEST_ROOT="/tmp/vendetta-e2e-$(date +%s)"
 TEST_REPO="$TEST_ROOT/test-repo"
 TEST_REMOTE="$TEST_ROOT/test-remote"
 
@@ -46,7 +46,7 @@ cat > package.json << 'EOF'
 {
   "name": "test-fullstack-app",
   "version": "1.0.0",
-  "description": "Test fullstack application for Vendatta e2e testing",
+  "description": "Test fullstack application for vendetta e2e testing",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && node index.js",
@@ -156,7 +156,7 @@ cat > client/index.html << 'EOF'
 <body>
   <div id="root">
     <h1>Test Fullstack Application</h1>
-    <p>This is a test application for Vendatta e2e testing.</p>
+    <p>This is a test application for vendetta e2e testing.</p>
   </div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
@@ -198,7 +198,7 @@ function App() {
   return (
     <div>
       <h1>Test Fullstack Application</h1>
-      <p>This is a test application for Vendatta e2e testing.</p>
+      <p>This is a test application for vendetta e2e testing.</p>
 
       <h2>Users</h2>
       {loading ? (
@@ -250,7 +250,7 @@ EOF
 cat > README.md << 'EOF'
 # Test Fullstack Application
 
-This is a comprehensive test application for Vendatta e2e testing. It includes:
+This is a comprehensive test application for vendetta e2e testing. It includes:
 
 - **Frontend**: React + Vite client application
 - **Backend**: Node.js + Express API server

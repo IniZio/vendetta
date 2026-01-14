@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vibegear/vendatta/pkg/provider"
-	"github.com/vibegear/vendatta/pkg/provider/docker"
-	"github.com/vibegear/vendatta/pkg/provider/lxc"
-	"github.com/vibegear/vendatta/pkg/provider/qemu"
+	"github.com/vibegear/vendetta/pkg/provider"
+	"github.com/vibegear/vendetta/pkg/provider/docker"
+	"github.com/vibegear/vendetta/pkg/provider/lxc"
+	"github.com/vibegear/vendetta/pkg/provider/qemu"
 )
 
 // Node represents the agent running on a remote machine

@@ -1,4 +1,4 @@
-# CLI UX Specification: Project Vendatta
+# CLI UX Specification: Project vendetta
 
 ## 1. Design Philosophy
 - **Speed**: Commands should provide immediate feedback (sub-second for information, clear progress for IO).
@@ -10,19 +10,19 @@
 
 | Command | Usage | Feedback Pattern |
 | :--- | :--- | :--- |
-| `init` | `vendatta init` | Interactive prompts + Success checklist. |
-| `workspace create <name>` | `vendatta workspace create <branch>` | Progress bars for worktree creation & config generation. |
-| `workspace up [name]` | `vendatta workspace up [branch]` | Starts container + runs hooks + port forwarding. Blocks for logs unless `-d`. |
-| `workspace shell [name]` | `vendatta workspace shell [branch]` | Opens interactive shell in workspace container. |
-| `workspace stop [name]` | `vendatta workspace stop [branch]` | Stops container but preserves state. |
-| `workspace down [name]` | `vendatta workspace down [branch]` | Stops and removes container/network. |
-| `workspace list` | `vendatta workspace list` | Tabular data with color-coded status (Active=Green, Stopped=Yellow). |
-| `workspace rm <name>` | `vendatta workspace rm <branch>` | Deletes worktree and associated resources. |
-| `config pull <url>` | `vendatta config pull <url>` [--branch=branch] | Pulls shared templates/capabilities from Git repo. |
-| `config sync <target>` | `vendatta config sync <target>` | Syncs .vendatta directory to configured remote target. |
-| `config sync-all` | `vendatta config sync-all` | Syncs .vendatta to all configured remote targets. |
-| `version update` | `vendatta version update` | Updates CLI binary to latest version. |
-| `internal mcp <id>` | `vendatta internal mcp <session-id>` | Hidden: MCP server for AI agent tool execution. |
+| `init` | `vendetta init` | Interactive prompts + Success checklist. |
+| `workspace create <name>` | `vendetta workspace create <branch>` | Progress bars for worktree creation & config generation. |
+| `workspace up [name]` | `vendetta workspace up [branch]` | Starts container + runs hooks + port forwarding. Blocks for logs unless `-d`. |
+| `workspace shell [name]` | `vendetta workspace shell [branch]` | Opens interactive shell in workspace container. |
+| `workspace stop [name]` | `vendetta workspace stop [branch]` | Stops container but preserves state. |
+| `workspace down [name]` | `vendetta workspace down [branch]` | Stops and removes container/network. |
+| `workspace list` | `vendetta workspace list` | Tabular data with color-coded status (Active=Green, Stopped=Yellow). |
+| `workspace rm <name>` | `vendetta workspace rm <branch>` | Deletes worktree and associated resources. |
+| `config pull <url>` | `vendetta config pull <url>` [--branch=branch] | Pulls shared templates/capabilities from Git repo. |
+| `config sync <target>` | `vendetta config sync <target>` | Syncs .vendetta directory to configured remote target. |
+| `config sync-all` | `vendetta config sync-all` | Syncs .vendetta to all configured remote targets. |
+| `version update` | `vendetta version update` | Updates CLI binary to latest version. |
+| `internal mcp <id>` | `vendetta internal mcp <session-id>` | Hidden: MCP server for AI agent tool execution. |
 
 ## 3. Command Groups
 
@@ -83,7 +83,7 @@ Solution: Add this directory to Docker Desktop > Settings > Resources > File Sha
 - Shared templates ensure consistency across agents
 
 ### **MCP Gateway**
-- `vendatta agent <session-id>` starts the MCP server for the session
+- `vendetta agent <session-id>` starts the MCP server for the session
 - Robust connection handling with automatic recovery
 - Secure tool execution within isolated environments
 

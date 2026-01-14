@@ -37,7 +37,7 @@ pkg/coordination/
 ├── dispatcher.go      # Provider dispatch interface
 └── status.go          # Status monitoring
 
-cmd/vendatta/
+cmd/vendetta/
 └── node.go            # Node management CLI commands
 ```
 

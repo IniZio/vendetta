@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vibegear/vendatta/pkg/provider"
+	"github.com/vibegear/vendetta/pkg/provider"
 )
 
 func TestNewLXCProvider(t *testing.T) {
@@ -45,8 +45,8 @@ func TestLXCProvider_Create_Integration(t *testing.T) {
 	assert.NotNil(t, session)
 	assert.Equal(t, sessionID, session.ID)
 	assert.Equal(t, "lxc", session.Provider)
-	assert.Contains(t, session.Labels, "vendatta.session.id")
-	assert.Equal(t, sessionID, session.Labels["vendatta.session.id"])
+	assert.Contains(t, session.Labels, "vendetta.session.id")
+	assert.Equal(t, sessionID, session.Labels["vendetta.session.id"])
 }
 
 func TestLXCProvider_Start_Integration(t *testing.T) {
@@ -141,8 +141,8 @@ func TestLXCProvider_List_Integration(t *testing.T) {
 	for _, session := range sessions {
 		if session.ID == sessionID && session.Provider == "lxc" {
 			found = true
-			assert.Contains(t, session.Labels, "vendatta.session.id")
-			assert.Equal(t, sessionID, session.Labels["vendatta.session.id"])
+			assert.Contains(t, session.Labels, "vendetta.session.id")
+			assert.Equal(t, sessionID, session.Labels["vendetta.session.id"])
 			break
 		}
 	}

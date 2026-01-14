@@ -138,7 +138,7 @@ func GenerateDefaultConfig(path string) error {
 	cfg := &Config{}
 	cfg.Server.Host = "0.0.0.0"
 	cfg.Server.Port = 3001
-	cfg.Server.AuthToken = "vendatta-coordination-token"
+	cfg.Server.AuthToken = "vendetta-coordination-token"
 	cfg.Server.ReadTimeout = "30s"
 	cfg.Server.WriteTimeout = "30s"
 	cfg.Server.IdleTimeout = "120s"
@@ -155,7 +155,7 @@ func GenerateDefaultConfig(path string) error {
 	cfg.WebSocket.PingPeriod = "30s"
 
 	cfg.Auth.Enabled = false
-	cfg.Auth.JWTSecret = "vendatta-jwt-secret-key-minimum-16-chars"
+	cfg.Auth.JWTSecret = "vendetta-jwt-secret-key-minimum-16-chars"
 	cfg.Auth.TokenExpiry = "24h"
 	cfg.Auth.AllowedIPs = []string{}
 

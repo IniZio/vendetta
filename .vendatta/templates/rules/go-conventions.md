@@ -42,7 +42,7 @@ import (
 // Blank line separates standard library from third-party
 import (
     "github.com/spf13/cobra"
-    "github.com/vibegear/vendatta/pkg/config"
+    "github.com/vibegear/vendetta/pkg/config"
 )
 
 // Local imports last

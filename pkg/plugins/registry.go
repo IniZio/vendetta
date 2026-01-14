@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Plugin represents a vendatta plugin
+// Plugin represents a vendetta plugin
 type Plugin struct {
 	Name         string            `yaml:"name"`
 	Version      string            `yaml:"version"`
@@ -48,13 +48,13 @@ func (r *Registry) DiscoverPlugins(baseDir string) error {
 		return fmt.Errorf("failed to discover local plugins: %w", err)
 	}
 
-	// TODO: Discover remote plugins from vendatta.lock
+	// TODO: Discover remote plugins from vendetta.lock
 	// This will be implemented in the lockfile manager
 
 	return nil
 }
 
-// discoverLocalPlugins finds plugins in .vendatta/plugins/
+// discoverLocalPlugins finds plugins in .vendetta/plugins/
 func (r *Registry) discoverLocalPlugins(pluginsDir string) error {
 	return filepath.WalkDir(pluginsDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

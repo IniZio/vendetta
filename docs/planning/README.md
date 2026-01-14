@@ -1,6 +1,6 @@
 # Project Planning
 
-Vendatta uses a **Milestone > Project > Task** hierarchy.
+vendetta uses a **Milestone > Project > Task** hierarchy.
 
 ## 🏷 Projects Legend
 

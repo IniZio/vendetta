@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/vibegear/vendatta/pkg/templates"
+	"github.com/vibegear/vendetta/pkg/templates"
 )
 
 type Service struct {
@@ -157,8 +157,8 @@ type RenderData struct {
 
 // GetMergedTemplates returns merged template data from all sources
 func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, error) {
-	vendattaDir := filepath.Join(baseDir, ".vendatta")
-	manager := templates.NewManager(vendattaDir)
+	vendettaDir := filepath.Join(baseDir, ".vendetta")
+	manager := templates.NewManager(vendettaDir)
 
 	var enabledPlugins []string
 	for _, p := range c.Plugins {
@@ -176,7 +176,7 @@ func (c *Config) GetMergedTemplates(baseDir string) (*templates.TemplateData, er
 		}
 	}
 
-	return manager.Merge(vendattaDir, enabledPlugins, extends)
+	return manager.Merge(vendettaDir, enabledPlugins, extends)
 }
 
 func (c *Config) isPluginEnabled(baseDir, name string) bool {
@@ -205,24 +205,24 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 		rulesDir     string
 	}{
 		"opencode": {
-			templatePath: ".vendatta/agents/opencode/opencode.json.tpl",
+			templatePath: ".vendetta/agents/opencode/opencode.json.tpl",
 			outputPath:   "opencode.json",
 			gitignore:    "AGENTS.md",
 			rulesFormat:  "md",
 			rulesDir:     ".opencode/rules",
 		},
 		"claude-desktop": {
-			templatePath: ".vendatta/agents/claude-desktop/claude_desktop_config.json.tpl",
+			templatePath: ".vendetta/agents/claude-desktop/claude_desktop_config.json.tpl",
 			outputPath:   "claude_desktop_config.json",
 			gitignore:    "claude_desktop_config.json",
 		},
 		"claude-code": {
-			templatePath: ".vendatta/agents/claude-code/claude_code_config.json.tpl",
+			templatePath: ".vendetta/agents/claude-code/claude_code_config.json.tpl",
 			outputPath:   "claude_code_config.json",
 			gitignore:    "claude_code_config.json",
 		},
 		"codex": {
-			templatePath: ".vendatta/agents/codex/settings.json.tpl",
+			templatePath: ".vendetta/agents/codex/settings.json.tpl",
 			outputPath:   ".vscode/settings.json",
 			gitignore:    ".vscode/",
 			rulesFormat:  "md",
@@ -344,7 +344,7 @@ func (c *Config) GenerateAgentConfigs(worktreePath string, merged *templates.Tem
 			}
 
 			// Load agent-specific rules from override directory
-			agentOverrideDir := filepath.Join(".vendatta", "agents", agentName, "rules")
+			agentOverrideDir := filepath.Join(".vendetta", "agents", agentName, "rules")
 			if _, err := os.Stat(agentOverrideDir); err == nil {
 				if err := filepath.Walk(agentOverrideDir, func(path string, info os.FileInfo, err error) error {
 					if err != nil {

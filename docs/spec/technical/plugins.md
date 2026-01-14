@@ -4,7 +4,7 @@
 
 > **Note:** This document describes the **plugin system**. For **extends** (remote template inheritance), see [Configuration Reference](../product/configuration.md).
 
-Vendatta's plugin system follows ESLint's model: load plugins as sources of capabilities, then enable/disable specific rules, skills, and commands. This provides fine-grained control while maintaining composability.
+vendetta's plugin system follows ESLint's model: load plugins as sources of capabilities, then enable/disable specific rules, skills, and commands. This provides fine-grained control while maintaining composability.
 
 ## 2. Plugin Loading & Resolution
 
@@ -27,19 +27,19 @@ When you load plugins, all their capabilities are automatically enabled. This pr
 # Load plugin sources - all capabilities automatically enabled
 plugins:
   - name: "vibegear/standard"
-    url: "https://github.com/IniZio/vendatta-config.git"
+    url: "https://github.com/IniZio/vendetta-config.git"
   - name: "company/internal"
-    path: "./.vendatta/plugins/internal"
+    path: "./.vendetta/plugins/internal"
 ```
 
-For customization, use local overrides in `.vendatta/templates/` to modify or remove specific capabilities.
+For customization, use local overrides in `.vendetta/templates/` to modify or remove specific capabilities.
 
 ## 4. Local Overrides
 
-Local templates in `.vendatta/templates/` can override or extend plugin capabilities:
+Local templates in `.vendetta/templates/` can override or extend plugin capabilities:
 
 ```
-.vendatta/templates/
+.vendetta/templates/
 ├── rules/
 │   └── custom-quality.md    # Overrides vibegear/standard/code-quality
 ├── skills/
@@ -50,10 +50,10 @@ Local templates in `.vendatta/templates/` can override or extend plugin capabili
 
 ## 4. Local Overrides
 
-Local templates in `.vendatta/templates/` can override or disable plugin capabilities:
+Local templates in `.vendetta/templates/` can override or disable plugin capabilities:
 
 ```
-.vendatta/templates/
+.vendetta/templates/
 ├── rules/
 │   └── custom-quality.md    # Override vibegear/standard/code-quality
 ├── skills/
@@ -99,7 +99,7 @@ return g.Wait()
 ```
 
 ### **Nested Path Handling**
-To handle one repository providing multiple plugins (e.g., `vendatta-config/plugins/core` and `vendatta-config/plugins/extra`):
+To handle one repository providing multiple plugins (e.g., `vendetta-config/plugins/core` and `vendetta-config/plugins/extra`):
 1.  **Normalization**: Map all plugin URLs to a unique repository identifier.
 2.  **Deduplication**: Only one `git clone` or `git pull` is executed per unique repository.
 3.  **Symlinking/Copying**: After cloning, the specific subpaths defined in `plugin.yaml` are mapped into the workspace's plugin registry.
@@ -111,9 +111,9 @@ To ensure that two different developers get the exact same environment, we imple
 1.  **Canonicalization**: Sort all active plugins alphabetically by namespace.
 2.  **Content Hashing**: Create a SHA256 hash of the "Merged Rule State":
     - Canonical JSON representation of all rules, skills, and commands.
-    - Version strings of all plugins from `vendatta.lock`.
-3.  **Verification**: The hash is stored in `vendatta.lock` as `metadata.content_hash`. If `vendatta workspace create` results in a different hash, the process fails with a `DeterminismWarning`.
+    - Version strings of all plugins from `vendetta.lock`.
+3.  **Verification**: The hash is stored in `vendetta.lock` as `metadata.content_hash`. If `vendetta workspace create` results in a different hash, the process fails with a `DeterminismWarning`.
 
 ## 4. Error Handling & Recovery
 - **Network Failures**: Implement an exponential backoff (3 retries) for remote clones.
-- **Lockfile Mismatch**: If `config.yaml` changes but `vendatta.lock` is not updated, the CLI must suggest running `vendatta plugin update`.
+- **Lockfile Mismatch**: If `config.yaml` changes but `vendetta.lock` is not updated, the CLI must suggest running `vendetta plugin update`.

@@ -17,7 +17,7 @@ type Logger struct {
 
 func NewLogger(basePath string) *Logger {
 	return &Logger{
-		filePath: filepath.Join(basePath, ".vendatta", "logs", "usage.json"),
+		filePath: filepath.Join(basePath, ".vendetta", "logs", "usage.json"),
 		store:    &LogStore{},
 	}
 }

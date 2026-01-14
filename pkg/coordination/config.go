@@ -128,10 +128,10 @@ func GetConfigPath() string {
 
 	// Current directory fallback
 	if cwd, err := os.Getwd(); err == nil {
-		return filepath.Join(cwd, ".vendatta", "coordination.yaml")
+		return filepath.Join(cwd, ".vendetta", "coordination.yaml")
 	}
 
-	return ".vendatta/coordination.yaml"
+	return ".vendetta/coordination.yaml"
 }
 
 // SaveConfig saves configuration to file

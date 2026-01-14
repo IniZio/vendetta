@@ -15,7 +15,7 @@ func TestRegistry_DiscoverPlugins(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Create plugin directory structure
-	pluginsDir := filepath.Join(tempDir, ".vendatta", "plugins")
+	pluginsDir := filepath.Join(tempDir, ".vendetta", "plugins")
 	require.NoError(t, os.MkdirAll(pluginsDir, 0755))
 
 	// Create a local plugin
@@ -43,7 +43,7 @@ func TestRegistry_DiscoverPlugins(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(corePluginDir, "plugin.yaml"), []byte(corePluginManifest), 0644))
 
 	// Debug: check if files exist
-	pluginYaml := filepath.Join(tempDir, ".vendatta", "plugins", "myorg", "git", "plugin.yaml")
+	pluginYaml := filepath.Join(tempDir, ".vendetta", "plugins", "myorg", "git", "plugin.yaml")
 	if _, err := os.Stat(pluginYaml); err == nil {
 		t.Logf("Plugin YAML exists")
 	} else {
@@ -52,7 +52,7 @@ func TestRegistry_DiscoverPlugins(t *testing.T) {
 
 	// Test discovery
 	registry := NewRegistry()
-	err = registry.DiscoverPlugins(tempDir + "/.vendatta")
+	err = registry.DiscoverPlugins(tempDir + "/.vendetta")
 	require.NoError(t, err)
 
 	// Debug: list all plugins

@@ -2,7 +2,7 @@
 
 set -e
 
-REPO="IniZio/vendatta"
+REPO="IniZio/vendetta"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 # Detect OS and architecture
@@ -77,7 +77,7 @@ install_binary() {
 }
 
 main() {
-    echo "Installing Vendatta..."
+    echo "Installing vendetta..."
 
     BINARY_NAME=$(detect_platform)
     TAG=$(get_latest_release)

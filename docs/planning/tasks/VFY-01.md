@@ -1,7 +1,7 @@
 # VFY-01: E2E Test Suite Implementation
 
 ## Objective
-Implement a comprehensive end-to-end test suite that validates all core Vendatta functionality and identifies issues with the current implementation.
+Implement a comprehensive end-to-end test suite that validates all core vendetta functionality and identifies issues with the current implementation.
 
 ## Background
 During development, it became apparent that while individual components appeared to work, the end-to-end functionality had gaps. A robust E2E test suite was needed to verify the complete user workflow and identify issues.
@@ -17,11 +17,11 @@ During development, it became apparent that while individual components appeared
 ### Test Coverage
 The test suite covers all major functionality:
 
-1. **TestVendattaInit** - Basic initialization and scaffolding
-2. **TestVendattaDevBasic** - Session creation and worktree setup
-3. **TestVendattaServiceDiscovery** - Environment variable injection ⚠️ **FAILS**
-4. **TestVendattaSessionManagement** - Multiple session handling
-5. **TestVendattaWorktreeIsolation** - Branch isolation verification
+1. **TestvendettaInit** - Basic initialization and scaffolding
+2. **TestvendettaDevBasic** - Session creation and worktree setup
+3. **TestvendettaServiceDiscovery** - Environment variable injection ⚠️ **FAILS**
+4. **TestvendettaSessionManagement** - Multiple session handling
+5. **TestvendettaWorktreeIsolation** - Branch isolation verification
 
 ### Test Infrastructure
 - **Docker-in-Docker**: Proper DinD setup for testing containerized sessions

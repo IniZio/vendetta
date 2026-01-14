@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vibegear/vendatta/pkg/templates"
+	"github.com/vibegear/vendetta/pkg/templates"
 	"gopkg.in/yaml.v3"
 )
 
@@ -133,7 +133,7 @@ func TestConfig_GetMergedTemplates(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	templatesDir := filepath.Join(tempDir, ".vendatta", "templates")
+	templatesDir := filepath.Join(tempDir, ".vendetta", "templates")
 	require.NoError(t, os.MkdirAll(templatesDir, 0755))
 
 	templateContent := `skills:

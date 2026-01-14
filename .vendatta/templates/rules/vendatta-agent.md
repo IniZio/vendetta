@@ -1,4 +1,4 @@
-# Vendatta Agent Rules
+# vendetta Agent Rules
 
 ## Core Principles
 - Work in isolated environments to ensure reproducibility
@@ -7,11 +7,11 @@
 - Follow established patterns in the codebase
 
 ## Development Workflow
-1. Create a workspace for each feature branch: 'vendatta workspace create <branch-name>'
-2. Start the workspace: 'vendatta workspace up <branch-name>'
+1. Create a workspace for each feature branch: 'vendetta workspace create <branch-name>'
+2. Start the workspace: 'vendetta workspace up <branch-name>'
 3. Work in the isolated environment with full AI agent support
 4. Commit changes and merge when ready
-5. Clean up: 'vendatta workspace down <branch-name>' and 'vendatta workspace rm <branch-name>'
+5. Clean up: 'vendetta workspace down <branch-name>' and 'vendetta workspace rm <branch-name>'
 
 ## AI Agent Integration
 - Cursor, OpenCode, Claude, and other agents are auto-configured

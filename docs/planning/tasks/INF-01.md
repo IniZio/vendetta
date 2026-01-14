@@ -14,9 +14,9 @@ Implement the Docker-based environment provider with support for Docker-in-Docke
 3.  **Port Mapping**: 
     - Dynamic mapping of private service ports to available host ports.
     - Expose SSH (port 22).
-4.  **Labeling**: Use `vendatta.session.id` for container discovery and tracking.
+4.  **Labeling**: Use `vendetta.session.id` for container discovery and tracking.
 
 ## 🧪 Proof of Work
-- Container is created with `vendatta.session.id` label.
+- Container is created with `vendetta.session.id` label.
 - Running `docker exec [id] docker version` works inside the container.
-- Ports are mapped and visible in `vendatta list`.
+- Ports are mapped and visible in `vendetta list`.

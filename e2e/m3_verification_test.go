@@ -31,24 +31,24 @@ func testRemoteProvider(t *testing.T, providerName string) {
 
 	// Create test project with remote configuration
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".vendatta/config.yaml": buildRemoteConfig(providerName),
+		".vendetta/config.yaml": buildRemoteConfig(providerName),
 	})
 
-	binaryPath := env.BuildVendattaBinary(t)
+	binaryPath := env.BuildvendettaBinary(t)
 
 	// Test initialization
-	env.RunVendattaCommand(t, binaryPath, projectDir, "init")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "init")
 
 	// Test workspace creation with remote configuration
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "create", "remote-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "create", "remote-test")
 
 	// Verify workspace structure
-	worktreePath := filepath.Join(projectDir, ".vendatta", "worktrees", "remote-test")
+	worktreePath := filepath.Join(projectDir, ".vendetta", "worktrees", "remote-test")
 	_, err := os.Stat(worktreePath)
 	require.NoError(t, err)
 
 	// Test workspace startup (should handle remote gracefully)
-	output, err := env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "up", "remote-test")
+	output, err := env.RunvendettaCommandWithError(binaryPath, projectDir, "workspace", "up", "remote-test")
 
 	if providerName == "qemu" {
 		// QEMU should work locally
@@ -63,7 +63,7 @@ func testRemoteProvider(t *testing.T, providerName string) {
 	}
 
 	// Cleanup
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "rm", "remote-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "rm", "remote-test")
 }
 
 // TestM3ServiceDiscovery tests service management and discovery
@@ -77,7 +77,7 @@ func TestM3ServiceDiscovery(t *testing.T) {
 
 	// Test service configuration with dependencies
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".vendatta/config.yaml:": `
+		".vendetta/config.yaml:": `
 name: service-discovery-test
 provider: qemu
 services:
@@ -89,7 +89,7 @@ services:
       interval: "5s"
       timeout: "2s"
       retries: 3
-  
+
   api:
     command: "npm run dev"
     port: 3000
@@ -101,7 +101,7 @@ services:
       interval: "10s"
       timeout: "5s"
       retries: 5
-  
+
   web:
     command: "python -m http.server 8080"
     port: 8080
@@ -121,13 +121,13 @@ qemu:
 `,
 	})
 
-	binaryPath := env.BuildVendattaBinary(t)
-	env.RunVendattaCommand(t, binaryPath, projectDir, "init")
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "create", "service-test")
+	binaryPath := env.BuildvendettaBinary(t)
+	env.RunvendettaCommand(t, binaryPath, projectDir, "init")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "create", "service-test")
 
 	// Verify service configuration is parsed correctly
-	worktreePath := filepath.Join(projectDir, ".vendatta", "worktrees", "service-test")
-	configPath := filepath.Join(worktreePath, ".vendatta", "config.yaml")
+	worktreePath := filepath.Join(projectDir, ".vendetta", "worktrees", "service-test")
+	configPath := filepath.Join(worktreePath, ".vendetta", "config.yaml")
 
 	configContent, err := os.ReadFile(configPath)
 	require.NoError(t, err)
@@ -136,7 +136,7 @@ qemu:
 	assert.Contains(t, string(configContent), "api:")
 	assert.Contains(t, string(configContent), "web:")
 
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "rm", "service-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "rm", "service-test")
 }
 
 // TestM3CoordinationServer tests coordination server functionality
@@ -150,7 +150,7 @@ func TestM3CoordinationServer(t *testing.T) {
 
 	// Test multi-node configuration
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".vendatta/config.yaml": `
+		".vendetta/config.yaml": `
 name: coordination-test
 provider: qemu
 remote:
@@ -163,7 +163,7 @@ nodes:
   - name: "node1"
     address: "192.168.1.100"
     provider: "docker"
-  - name: "node2" 
+  - name: "node2"
     address: "192.168.1.101"
     provider: "lxc"
   - name: "node3"
@@ -176,7 +176,7 @@ services:
     port: 3001
     healthcheck:
       url: "http://localhost:3001/status"
-  
+
   monitor:
     command: "node-monitor --coordinator localhost:3001"
     port: 3002
@@ -184,11 +184,11 @@ services:
 `,
 	})
 
-	binaryPath := env.BuildVendattaBinary(t)
-	env.RunVendattaCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildvendettaBinary(t)
+	env.RunvendettaCommand(t, binaryPath, projectDir, "init")
 
 	// Test coordination server commands (if implemented)
-	output, err := env.RunVendattaCommandWithError(binaryPath, projectDir, "node", "list")
+	output, err := env.RunvendettaCommandWithError(binaryPath, projectDir, "node", "list")
 
 	// If node commands don't exist yet, verify error is appropriate
 	if err != nil {
@@ -211,7 +211,7 @@ func TestM3ConfigurationMerging(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".vendatta/config.yaml": `
+		".vendetta/config.yaml": `
 name: config-merge-test
 provider: qemu
 extends:
@@ -234,7 +234,7 @@ remote:
   node: "remote.example.com"
   user: "devuser"
 `,
-		".vendatta/templates/base-config.yaml": `
+		".vendetta/templates/base-config.yaml": `
 # Base configuration for all workspaces
 hooks:
   setup: "echo 'Setting up environment...'"
@@ -245,7 +245,7 @@ qemu:
   cpu: 2
   memory: "4G"
 `,
-		".vendatta/templates/remote-config.yaml": `
+		".vendetta/templates/remote-config.yaml": `
 # Remote-specific configuration
 remote:
   port: 22
@@ -257,13 +257,13 @@ services:
 `,
 	})
 
-	binaryPath := env.BuildVendattaBinary(t)
-	env.RunVendattaCommand(t, binaryPath, projectDir, "init")
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "create", "merge-test")
+	binaryPath := env.BuildvendettaBinary(t)
+	env.RunvendettaCommand(t, binaryPath, projectDir, "init")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "create", "merge-test")
 
 	// Verify merged configuration
-	worktreePath := filepath.Join(projectDir, ".vendatta", "worktrees", "merge-test")
-	mergedConfigPath := filepath.Join(worktreePath, ".vendatta", "config.yaml")
+	worktreePath := filepath.Join(projectDir, ".vendetta", "worktrees", "merge-test")
+	mergedConfigPath := filepath.Join(worktreePath, ".vendetta", "config.yaml")
 
 	configContent, err := os.ReadFile(mergedConfigPath)
 	require.NoError(t, err)
@@ -279,7 +279,7 @@ services:
 	assert.Contains(t, string(configContent), "memory: 8G") // Should be 8G, not 4G
 	assert.Contains(t, string(configContent), "cpu: 4")     // Should be 4, not 2
 
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "rm", "merge-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "rm", "merge-test")
 }
 
 // TestM3ErrorHandling tests error scenarios and recovery
@@ -291,11 +291,11 @@ func TestM3ErrorHandling(t *testing.T) {
 	env := NewTestEnvironment(t)
 	defer env.Cleanup()
 
-	binaryPath := env.BuildVendattaBinary(t)
+	binaryPath := env.BuildvendettaBinary(t)
 
 	t.Run("invalid_remote_config", func(t *testing.T) {
 		projectDir := env.CreateTestProject(t, map[string]string{
-			".vendatta/config.yaml": `
+			".vendetta/config.yaml": `
 name: invalid-remote-test
 provider: qemu
 remote:
@@ -304,7 +304,7 @@ remote:
 `,
 		})
 
-		output, err := env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid-test")
+		output, err := env.RunvendettaCommandWithError(binaryPath, projectDir, "workspace", "create", "invalid-test")
 		require.Error(t, err)
 		invalidFound := strings.Contains(output, "invalid")
 		requiredFound := strings.Contains(output, "required")
@@ -313,19 +313,19 @@ remote:
 
 	t.Run("unsupported_provider", func(t *testing.T) {
 		projectDir := env.CreateTestProject(t, map[string]string{
-			".vendatta/config.yaml": `
+			".vendetta/config.yaml": `
 name: unsupported-provider-test
 provider: "nonexistent"
 `,
 		})
 
-		_, err := env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "create", "unsupported-test")
+		_, err := env.RunvendettaCommandWithError(binaryPath, projectDir, "workspace", "create", "unsupported-test")
 		require.Error(t, err)
 	})
 
 	t.Run("resource_limits", func(t *testing.T) {
 		projectDir := env.CreateTestProject(t, map[string]string{
-			".vendatta/config.yaml": `
+			".vendetta/config.yaml": `
 name: resource-test
 provider: qemu
 qemu:
@@ -335,7 +335,7 @@ qemu:
 `,
 		})
 
-		output, err := env.RunVendattaCommandWithError(binaryPath, projectDir, "workspace", "create", "resource-test")
+		output, err := env.RunvendettaCommandWithError(binaryPath, projectDir, "workspace", "create", "resource-test")
 		// Should either validate and reject, or attempt and fail gracefully
 		if err != nil {
 			resourceFound := strings.Contains(output, "resource")
@@ -356,7 +356,7 @@ func TestM3PerformanceBenchmarks(t *testing.T) {
 	defer env.Cleanup()
 
 	projectDir := env.CreateTestProject(t, map[string]string{
-		".vendatta/config.yaml": `
+		".vendetta/config.yaml": `
 name: performance-test
 provider: qemu
 qemu:
@@ -373,25 +373,25 @@ services:
 `,
 	})
 
-	binaryPath := env.BuildVendattaBinary(t)
-	env.RunVendattaCommand(t, binaryPath, projectDir, "init")
+	binaryPath := env.BuildvendettaBinary(t)
+	env.RunvendettaCommand(t, binaryPath, projectDir, "init")
 
 	// Benchmark workspace creation
 	start := time.Now()
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "create", "perf-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "create", "perf-test")
 	createTime := time.Since(start)
 	t.Logf("Workspace creation time: %v", createTime)
 	assert.Less(t, createTime, 30*time.Second, "Workspace creation should complete within 30 seconds")
 
 	// Benchmark workspace startup
 	start = time.Now()
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "up", "perf-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "up", "perf-test")
 	startupTime := time.Since(start)
 	t.Logf("Workspace startup time: %v", startupTime)
 	assert.Less(t, startupTime, 120*time.Second, "Workspace startup should complete within 120 seconds")
 
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "down", "perf-test")
-	env.RunVendattaCommand(t, binaryPath, projectDir, "workspace", "rm", "perf-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "down", "perf-test")
+	env.RunvendettaCommand(t, binaryPath, projectDir, "workspace", "rm", "perf-test")
 }
 
 // Helper function to build remote configuration for different providers

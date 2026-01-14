@@ -19,7 +19,7 @@ for name, svc := range cfg.Services {
         pStr := fmt.Sprintf("%d/tcp", svc.Port)
         if bindings, ok := json.NetworkSettings.Ports[nat.Port(pStr)]; ok && len(bindings) > 0 {
             url := fmt.Sprintf("http://localhost:%s", bindings[0].HostPort)
-            env = append(env, fmt.Sprintf("VENDATTA_SERVICE_%s_URL=%s", name, url))
+            env = append(env, fmt.Sprintf("vendetta_SERVICE_%s_URL=%s", name, url))
         }
     }
 }
@@ -32,7 +32,7 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
     Image: imgName,
     Tty:   true,
     Labels: map[string]string{
-        "vendatta.session.id": sessionID,
+        "vendetta.session.id": sessionID,
     },
     Cmd:          []string{"/bin/bash"},
     Env:          env,  // ✅ ADD THIS: Pass environment variables
@@ -51,11 +51,11 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
 - **Protocol Guessing**: postgres → `postgresql://`, web services → `http://`
 
 ### **Environment Variable Format**
-- **Pattern**: `VENDATTA_SERVICE_{SERVICE_NAME}_URL={PROTOCOL}://localhost:{PORT}`
+- **Pattern**: `vendetta_SERVICE_{SERVICE_NAME}_URL={PROTOCOL}://localhost:{PORT}`
 - **Examples**:
-  - `VENDATTA_SERVICE_WEB_URL=http://localhost:3000`
-  - `VENDATTA_SERVICE_API_URL=http://localhost:8080`
-  - `VENDATTA_SERVICE_DB_URL=postgresql://localhost:5432`
+  - `vendetta_SERVICE_WEB_URL=http://localhost:3000`
+  - `vendetta_SERVICE_API_URL=http://localhost:8080`
+  - `vendetta_SERVICE_DB_URL=postgresql://localhost:5432`
 - **Service Name**: Uppercased service key from config.yaml
 
 ## 🧪 Testing Requirements
@@ -68,16 +68,16 @@ resp, err := p.cli.ContainerCreate(ctx, &container.Config{
 
 ### **Integration Tests**
 - ✅ Container receives environment variables on creation
-- ✅ Variables accessible in container shell: `env | grep VENDATTA_SERVICE`
+- ✅ Variables accessible in container shell: `env | grep vendetta_SERVICE`
 - ✅ Variables available in hook scripts during execution
 
 ### **E2E Scenarios**
 ```bash
 # Test service discovery
-vendatta workspace create discovery-test
+vendetta workspace create discovery-test
 
 # Configure services with commands (ports auto-detected)
-cat > .vendatta/config.yaml << EOF
+cat > .vendetta/config.yaml << EOF
 services:
   web:
     command: "cd client && npm run dev"
@@ -88,15 +88,15 @@ services:
 EOF
 
 # Start workspace - environment variables injected before services start
-vendatta workspace up discovery-test
+vendetta workspace up discovery-test
 
 # Verify environment variables available in container
-vendatta workspace shell discovery-test
-env | grep VENDATTA_SERVICE
+vendetta workspace shell discovery-test
+env | grep vendetta_SERVICE
 # Expected output:
-# VENDATTA_SERVICE_WEB_URL=http://localhost:3000
-# VENDATTA_SERVICE_API_URL=http://localhost:8080
-# VENDATTA_SERVICE_DB_URL=postgresql://localhost:5432
+# vendetta_SERVICE_WEB_URL=http://localhost:3000
+# vendetta_SERVICE_API_URL=http://localhost:8080
+# vendetta_SERVICE_DB_URL=postgresql://localhost:5432
 ```
 
 ## 📋 Implementation Steps
@@ -107,7 +107,7 @@ env | grep VENDATTA_SERVICE
 4. **Add Tests**: Create comprehensive tests for service discovery
 
 ## 🎯 Success Criteria
-- ✅ `VENDATTA_SERVICE_*_URL` variables available in running containers
+- ✅ `vendetta_SERVICE_*_URL` variables available in running containers
 - ✅ Variables accessible in hook scripts
 - ✅ Multiple services work correctly
 - ✅ Existing E2E tests pass

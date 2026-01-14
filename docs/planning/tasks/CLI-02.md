@@ -9,21 +9,21 @@ Implement native CLI support for Git remote synchronization, allowing users to m
 ## 🛠 Implementation Details
 
 ### **Command Structure**
-- **Parent Command**: `vendatta remote`
+- **Parent Command**: `vendetta remote`
 - **Subcommands**:
-  - `vendatta remote sync <target-name>` (syncs .vendatta to configured target)
-  - `vendatta remote sync-all` (syncs .vendatta to all configured targets)
+  - `vendetta remote sync <target-name>` (syncs .vendetta to configured target)
+  - `vendetta remote sync-all` (syncs .vendetta to all configured targets)
 
 ### **Configuration Integration**
-- **Config Section**: `sync_targets` array in `.vendatta/config.yaml`
+- **Config Section**: `sync_targets` array in `.vendetta/config.yaml`
 - **Target Definition**: Each target specifies `name` and `url`
-- **Always .vendatta Only**: Syncs only the `.vendatta` directory to maintain config separation
+- **Always .vendetta Only**: Syncs only the `.vendetta` directory to maintain config separation
 - **Declarative Sync**: Commands read config and sync to defined targets
 
 ### **Git Operations Automation**
 1. **Pull from Origin**: Ensures local repository is up-to-date
 2. **Remote Management**: Adds or updates the specified remote
-3. **Content Filtering**: Creates filtered branch with only `.vendatta` directory
+3. **Content Filtering**: Creates filtered branch with only `.vendetta` directory
 4. **Push Operations**: Pushes filtered branch to remote main
 
 ### **Error Handling**
@@ -33,7 +33,7 @@ Implement native CLI support for Git remote synchronization, allowing users to m
 - **Git States**: Validates repository state before operations
 
 ### **Advanced Features**
-- **Configs-Only Mode**: Selective synchronization of `.vendatta` configuration files
+- **Configs-Only Mode**: Selective synchronization of `.vendetta` configuration files
 - **Branch Management**: Temporary branches for filtered content
 - **Cleanup**: Automatic cleanup of temporary Git objects
 
