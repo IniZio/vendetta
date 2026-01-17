@@ -64,7 +64,7 @@ description: "Full-stack web application"
 # Plugin sources to load
 plugins:
   - name: "mochi/standard"
-    url: "https://github.com/IniZio/mochi-config.git"
+    url: "https://github.com/IniZio/laichi-config.git"
   - name: "company/templates"
     url: "https://github.com/company/ai-templates.git"
 

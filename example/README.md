@@ -1,6 +1,6 @@
 # mochi Example Project
 
-This directory contains a complete working example of an mochi-configured project. It demonstrates a full-stack web application with database, API, and frontend services, plus AI agent integration.
+This directory contains a complete working example of an nexus-configured project. It demonstrates a full-stack web application with database, API, and frontend services, plus AI agent integration.
 
 ## What's Included
 

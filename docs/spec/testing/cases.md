@@ -747,7 +747,7 @@ depends_on: []
   "plugins": [
     {
       "name": "mochi/standard",
-      "url": "https://github.com/IniZio/mochi-config.git",
+      "url": "https://github.com/IniZio/laichi-config.git",
       "revision": "abc123..."
     }
   ]

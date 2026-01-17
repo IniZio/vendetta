@@ -38,7 +38,7 @@ sync_targets:
   - name: "team-templates"
     url: "https://github.com/company/mochi-templates.git"
   - name: "project-configs"
-    url: "https://github.com/project/mochi-configs.git"
+    url: "https://github.com/project/nexus-configs.git"
 ```
 
 ### **Template Merging**

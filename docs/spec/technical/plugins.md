@@ -27,7 +27,7 @@ When you load plugins, all their capabilities are automatically enabled. This pr
 # Load plugin sources - all capabilities automatically enabled
 plugins:
   - name: "mochi/standard"
-    url: "https://github.com/IniZio/mochi-config.git"
+    url: "https://github.com/IniZio/laichi-config.git"
   - name: "company/internal"
     path: "./.mochi/plugins/internal"
 ```
@@ -99,7 +99,7 @@ return g.Wait()
 ```
 
 ### **Nested Path Handling**
-To handle one repository providing multiple plugins (e.g., `mochi-config/plugins/core` and `mochi-config/plugins/extra`):
+To handle one repository providing multiple plugins (e.g., `nexus-config/plugins/core` and `nexus-config/plugins/extra`):
 1.  **Normalization**: Map all plugin URLs to a unique repository identifier.
 2.  **Deduplication**: Only one `git clone` or `git pull` is executed per unique repository.
 3.  **Symlinking/Copying**: After cloning, the specific subpaths defined in `plugin.yaml` are mapped into the workspace's plugin registry.

@@ -12,7 +12,7 @@ name: "project-name"           # Required: Project identifier
 description: "Optional description"
 
 extends:                       # Base configurations to extend
-  - inizio/mochi-config-inizio
+  - inizio/nexus-config-inizio
 
 plugins:                       # Conditional plugins to load
   - golang                     # Only if go.mod exists
@@ -28,7 +28,7 @@ Extends allow you to inherit base configurations from remote repositories, simil
 #### **Extend Sources**
 ```yaml
 extends:
-  - inizio/mochi-config-inizio     # Base config from remote repo
+  - inizio/nexus-config-inizio     # Base config from remote repo
   - company/base-config               # Company-wide base config
   - owner/repo@branch                 # With optional branch (default: main)
 ```

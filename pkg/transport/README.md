@@ -29,7 +29,7 @@ pkg/transport/
 ### Basic Usage
 
 ```go
-import "github.com/mochi/mochi/pkg/transport"
+import "github.com/nexus/nexus/pkg/transport"
 
 // Create transport manager
 manager := transport.NewManager()
@@ -186,7 +186,7 @@ For communication between coordination server and node agents:
 nodeConfig := transport.CreateDefaultSSHConfig(
     "coordinator.example.com:3001",
     "mochi", 
-    "/home/mochi/.ssh/id_rsa",
+    "/home/nexus/.ssh/id_rsa",
 )
 
 // Parallel execution across nodes
@@ -266,10 +266,10 @@ Save and load transport configurations:
 
 ```go
 // Save configurations
-err := manager.SaveConfig("/etc/mochi/transports.yaml")
+err := manager.SaveConfig("/etc/nexus/transports.yaml")
 
 // Load configurations  
-err := manager.LoadConfig("/etc/mochi/transports.yaml")
+err := manager.LoadConfig("/etc/nexus/transports.yaml")
 
 // List available configurations
 configs := manager.ListConfigs()

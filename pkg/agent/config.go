@@ -41,13 +41,13 @@ func LoadConfig(path string) (NodeConfig, error) {
 	}
 
 	// Environment variable overrides
-	if url := os.Getenv("VENDETTA_COORD_URL"); url != "" {
+	if url := os.Getenv("NEXUS_COORD_URL"); url != "" {
 		config.CoordinationURL = url
 	}
-	if token := os.Getenv("VENDETTA_AUTH_TOKEN"); token != "" {
+	if token := os.Getenv("NEXUS_AUTH_TOKEN"); token != "" {
 		config.AuthToken = token
 	}
-	if provider := os.Getenv("VENDETTA_PROVIDER"); provider != "" {
+	if provider := os.Getenv("NEXUS_PROVIDER"); provider != "" {
 		config.Provider = provider
 	}
 
@@ -76,8 +76,8 @@ func SaveConfig(config NodeConfig, path string) error {
 // GetConfigPath returns the default agent config path
 func GetConfigPath() string {
 	if home, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(home, ".config", "mochi", "agent.yaml")
+		return filepath.Join(home, ".config", "nexus", "agent.yaml")
 	}
 
-	return "/etc/mochi/agent.yaml"
+	return "/etc/nexus/agent.yaml"
 }

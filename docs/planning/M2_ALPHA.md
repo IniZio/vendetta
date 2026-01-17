@@ -12,7 +12,7 @@
 - [ ] Standardized Makefile with CI integration.
 - [ ] Config extraction to plugins command for simplified sharing.
 - [ ] LXC provider implementation as lightweight alternative to Docker.
-- [ ] Standard config moved to `git@github.com:IniZio/mochi-config.git`.
+- [ ] Standard config moved to `git@github.com:IniZio/nexus-config.git`.
 
 ## 🛠 Implementation Tasks
 
@@ -114,7 +114,7 @@
 **Requirements:**
 - Reference implementation from https://github.com/authgear/authgear-server for automatic schema generation
 - Export final schema file from Go structs without hand-crafting
-- Populate https://github.com/IniZio/mochi-config with generic sharable plugins
+- Populate https://github.com/IniZio/laichi-config with generic sharable plugins
 - Note: Unlike eslint, plugins are OFF by default (opt-in), not ON by default
 
 **Unit Tests:**
@@ -125,7 +125,7 @@
 **Integration Tests:**
 - ✅ **IDE Support**: VSCode/Cursor intellisense works with auto-generated schema
 - ✅ **CLI Validation**: `mochi config validate` command works
-- ✅ **Plugin Registry**: Generic plugins available from mochi-config repo
+- ✅ **Plugin Registry**: Generic plugins available from nexus-config repo
 
 ---
 
@@ -226,6 +226,6 @@ make fmt            # Code properly formatted
 ### **Handover Guidelines**
 - **Follow TDD**: All logic in `pkg/plugins` and `pkg/lock` must have 90%+ unit test coverage.
 - **Mock Git**: Use `testify/mock` to simulate git remote operations in integration tests.
-- **Standard Repo**: Populate `git@github.com:IniZio/mochi-config.git` with generic sharable plugins (coding standards, development tools, framework-specific rules).
+- **Standard Repo**: Populate `git@github.com:IniZio/nexus-config.git` with generic sharable plugins (coding standards, development tools, framework-specific rules).
 - **Plugin Philosophy**: Plugins are OFF by default (opt-in) - unlike eslint, users must explicitly enable plugins to avoid unexpected behavior.
 - **Config Extraction**: Use CFG-02 for sharing team standards instead of complex remote syncing.
