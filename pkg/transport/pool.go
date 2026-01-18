@@ -150,7 +150,7 @@ func (p *Pool) put(conn *PooledConnection) error {
 	}
 
 	if idleConns > maxIdle {
-		return p.destroyConnection(conn)
+		return p.destroyConnectionLocked(conn)
 	}
 
 	maxLifetime := p.config.Connection.MaxLifetime
@@ -159,7 +159,7 @@ func (p *Pool) put(conn *PooledConnection) error {
 	}
 
 	if time.Since(conn.created) > maxLifetime {
-		return p.destroyConnection(conn)
+		return p.destroyConnectionLocked(conn)
 	}
 
 	return nil
@@ -172,9 +172,11 @@ func (p *Pool) Close() error {
 	var lastErr error
 	for target, conns := range p.conns {
 		for _, conn := range conns {
-			if err := p.destroyConnection(conn); err != nil {
+			conn.mu.Lock()
+			if err := p.destroyConnectionLocked(conn); err != nil {
 				lastErr = err
 			}
+			conn.mu.Unlock()
 		}
 		delete(p.conns, target)
 	}
@@ -220,7 +222,7 @@ func (p *Pool) CleanupIdleConnections() {
 		for _, conn := range conns {
 			conn.mu.Lock()
 			if !conn.inUse && now.Sub(conn.lastUsed) > idleTimeout {
-				go p.destroyConnection(conn)
+				p.destroyConnectionLocked(conn)
 			} else {
 				remainingConns = append(remainingConns, conn)
 			}
@@ -236,10 +238,7 @@ func (p *Pool) createTransport(target string) (Transport, error) {
 	return p.factory.CreateTransport(&config)
 }
 
-func (p *Pool) destroyConnection(conn *PooledConnection) error {
-	conn.mu.Lock()
-	defer conn.mu.Unlock()
-
+func (p *Pool) destroyConnectionLocked(conn *PooledConnection) error {
 	if conn.inUse {
 		return fmt.Errorf("cannot destroy connection in use")
 	}
@@ -260,6 +259,13 @@ func (p *Pool) destroyConnection(conn *PooledConnection) error {
 	p.metrics.Idle--
 
 	return nil
+}
+
+func (p *Pool) destroyConnection(conn *PooledConnection) error {
+	conn.mu.Lock()
+	defer conn.mu.Unlock()
+
+	return p.destroyConnectionLocked(conn)
 }
 
 func (c *PooledConnection) isHealthy() bool {

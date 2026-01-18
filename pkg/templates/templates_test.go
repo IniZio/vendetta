@@ -4,8 +4,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -121,7 +123,13 @@ func TestGetRepoSHA(t *testing.T) {
 	_, err = wt.Add("test.txt")
 	assert.NoError(t, err)
 
-	_, err = wt.Commit("Initial commit", &git.CommitOptions{})
+	_, err = wt.Commit("Initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Test User",
+			Email: "test@example.com",
+			When:  time.Now(),
+		},
+	})
 	assert.NoError(t, err)
 
 	// Now test GetRepoSHA

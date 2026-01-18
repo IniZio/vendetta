@@ -176,7 +176,7 @@ func TestPoolClose(t *testing.T) {
 
 func TestPooledConnection(t *testing.T) {
 	conn := &PooledConnection{
-		transport: &MockTransport{},
+		transport: &MockTransport{connected: true},
 		target:    "test://target",
 		inUse:     false,
 		created:   time.Now(),
@@ -253,6 +253,9 @@ func TestPoolCleanupIdleConnections(t *testing.T) {
 	// Create connections and return them to pool
 	transport1, _ := pool.Get(ctx, "test://target1")
 	transport2, _ := pool.Get(ctx, "test://target2")
+
+	transport1.Connect(ctx, "test://target1")
+	transport2.Connect(ctx, "test://target2")
 
 	transport1.Disconnect(ctx)
 	transport2.Disconnect(ctx)
