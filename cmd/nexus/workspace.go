@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -54,11 +55,24 @@ var workspaceShowCmd = &cobra.Command{
 	},
 }
 
+var workspaceExecCmd = &cobra.Command{
+	Use:   "exec <workspace-name> <command>",
+	Short: "Execute a command in a workspace",
+	Long:  `Execute a command inside a workspace. Uses LXC container execution.`,
+	Args:  cobra.MinimumNArgs(2),
+	RunE: func(_ *cobra.Command, args []string) error {
+		workspaceName := args[0]
+		command := args[1]
+		return runWorkspaceExec(workspaceName, command)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(workspaceCmd)
 	workspaceCmd.AddCommand(workspaceCreateCmd)
 	workspaceCmd.AddCommand(workspaceConnectCmd)
 	workspaceCmd.AddCommand(workspaceShowCmd)
+	workspaceCmd.AddCommand(workspaceExecCmd)
 }
 
 func runWorkspaceCreate(repoString string) error {
@@ -224,5 +238,20 @@ func runWorkspaceShow(workspaceName string) error {
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 	_ = ctx
+	return nil
+}
+
+func runWorkspaceExec(workspaceName string, command string) error {
+	lxcContainerName := fmt.Sprintf("nexus-epson-eshop-%s", workspaceName)
+
+	lxcExecCmd := exec.Command("lxc", "exec", lxcContainerName, "--", "sh", "-c", command)
+	lxcExecCmd.Stdout = os.Stdout
+	lxcExecCmd.Stderr = os.Stderr
+	lxcExecCmd.Stdin = os.Stdin
+
+	if err := lxcExecCmd.Run(); err != nil {
+		return fmt.Errorf("failed to execute command in workspace: %w", err)
+	}
+
 	return nil
 }
