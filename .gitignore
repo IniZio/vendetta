@@ -7,16 +7,8 @@ coverage*.out
 coverage.html
 # Dependencies
 node_modules/
-# nexus runtime artifacts
-.nexus/worktrees/
-.nexus/plugins/
-.nexus/*.lock
-.nexus/*.db
-.nexus/*.db-shm
-.nexus/*.db-wal
-.nexus/server.pid
-.nexus/server.log
-.nexus/coordination.yaml
+# nexus runtime artifacts (gitignore entire .nexus-runtime directory)
+.nexus-runtime/
 .cursor/
 .opencode/
 claude_desktop_config.json
