@@ -54,6 +54,11 @@ func TestParseGitHubSSHKeyError(t *testing.T) {
 			wantCode:  401,
 		},
 		{
+			name:      "403 forbidden",
+			errOutput: "HTTP 403: Forbidden",
+			wantCode:  403,
+		},
+		{
 			name:      "unknown error",
 			errOutput: "something went wrong",
 			wantCode:  0,

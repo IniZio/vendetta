@@ -160,3 +160,48 @@ func TestAddWorkspaceToConfig(t *testing.T) {
 	assert.NotEmpty(t, loaded.Workspaces)
 	assert.Equal(t, "feature-x", loaded.Workspaces[0].Name)
 }
+
+func TestAddMultipleWorkspacesToConfig(t *testing.T) {
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config.yaml")
+
+	cfg := &UserConfig{}
+	cfg.GitHub.Username = "testuser"
+
+	err := SaveUserConfig(configPath, cfg)
+	assert.NoError(t, err)
+
+	err = AddWorkspaceToConfig(configPath, "ws1", "id1", "ready")
+	assert.NoError(t, err)
+
+	err = AddWorkspaceToConfig(configPath, "ws2", "id2", "pending")
+	assert.NoError(t, err)
+
+	loaded, _ := LoadUserConfig(configPath)
+	assert.Equal(t, 2, len(loaded.Workspaces))
+	assert.Equal(t, "ws1", loaded.Workspaces[0].Name)
+	assert.Equal(t, "ws2", loaded.Workspaces[1].Name)
+}
+
+func TestSaveAndLoadComplexConfig(t *testing.T) {
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config.yaml")
+
+	cfg := &UserConfig{}
+	cfg.GitHub.Username = "alice"
+	cfg.GitHub.UserID = 12345
+	cfg.GitHub.AvatarURL = "https://avatars.githubusercontent.com/u/12345"
+	cfg.SSH.KeyPath = "~/.ssh/id_ed25519"
+	cfg.SSH.PublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+	cfg.Editor = "cursor"
+
+	err := SaveUserConfig(configPath, cfg)
+	assert.NoError(t, err)
+
+	loaded, err := LoadUserConfig(configPath)
+	assert.NoError(t, err)
+	assert.Equal(t, "alice", loaded.GitHub.Username)
+	assert.Equal(t, int64(12345), loaded.GitHub.UserID)
+	assert.Equal(t, "cursor", loaded.Editor)
+	assert.Equal(t, "~/.ssh/id_ed25519", loaded.SSH.KeyPath)
+}

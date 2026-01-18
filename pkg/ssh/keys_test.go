@@ -94,6 +94,16 @@ func TestGenerateSSHKey(t *testing.T) {
 				assert.FileExists(t, pubPath)
 			},
 		},
+		{
+			name:     "generate ecdsa key",
+			keyType:  "ecdsa",
+			fileName: "id_ecdsa_test",
+			wantErr:  false,
+			validate: func(keyPath, pubPath string) {
+				assert.FileExists(t, keyPath)
+				assert.FileExists(t, pubPath)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -220,6 +230,13 @@ func TestEnsureSSHKey(t *testing.T) {
 			wantErr:        false,
 			validateExists: true,
 		},
+		{
+			name:           "reuse existing key",
+			sshDir:         filepath.Join(tempDir, "existing_ssh"),
+			keyType:        "ed25519",
+			wantErr:        false,
+			validateExists: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -235,6 +252,11 @@ func TestEnsureSSHKey(t *testing.T) {
 					assert.FileExists(t, keyPath)
 					assert.FileExists(t, keyPath+".pub")
 				}
+			}
+
+			if !tt.wantErr && tt.validateExists {
+				err2 := EnsureSSHKey(tt.sshDir, tt.keyType)
+				assert.NoError(t, err2)
 			}
 		})
 	}

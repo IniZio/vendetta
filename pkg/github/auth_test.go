@@ -18,6 +18,12 @@ func TestDetectGHCLI(t *testing.T) {
 			setupMock: func() {},
 			wantErr:   false,
 		},
+		{
+			name: "gh CLI found in PATH",
+			setupMock: func() {
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -104,4 +110,27 @@ func TestExecuteGHCommand(t *testing.T) {
 
 func TestAuthenticateWithGH(t *testing.T) {
 	t.Skip("Skipping interactive auth test")
+}
+
+func TestExecuteGHCommandFailure(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{
+			name:    "invalid command",
+			args:    []string{"invalid-command-xyz"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ExecuteGHCommand("gh", tt.args...)
+			if tt.wantErr {
+				assert.Error(t, err)
+			}
+		})
+	}
 }

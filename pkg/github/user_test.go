@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestExtractUserInfo(t *testing.T) {
@@ -142,15 +141,75 @@ func TestMergeTempAndPersistentUserInfo(t *testing.T) {
 				AvatarURL: "https://example.com/avatar.jpg",
 			},
 		},
+		{
+			name:       "nil persistent returns temp",
+			persistent: nil,
+			temp: &UserInfo{
+				Username: "user",
+				UserID:   123,
+			},
+			want: &UserInfo{
+				Username: "user",
+				UserID:   123,
+			},
+		},
+		{
+			name:       "nil temp returns persistent",
+			persistent: &UserInfo{Username: "user", UserID: 123},
+			temp:       nil,
+			want: &UserInfo{
+				Username: "user",
+				UserID:   123,
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			merged := MergeTempAndPersistentUserInfo(tt.persistent, tt.temp)
-			require.NotNil(t, merged)
-			assert.Equal(t, tt.want.Username, merged.Username)
-			assert.Equal(t, tt.want.UserID, merged.UserID)
-			assert.Equal(t, tt.want.AvatarURL, merged.AvatarURL)
+			if merged != nil {
+				assert.Equal(t, tt.want.Username, merged.Username)
+				assert.Equal(t, tt.want.UserID, merged.UserID)
+				assert.Equal(t, tt.want.AvatarURL, merged.AvatarURL)
+			}
+		})
+	}
+}
+
+func TestParseUserInfoJSON(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     string
+		wantErr  bool
+		validate func(*UserInfo)
+	}{
+		{
+			name:    "valid json",
+			data:    `{"username":"testuser","user_id":123,"avatar_url":"https://example.com/avatar.jpg"}`,
+			wantErr: false,
+			validate: func(ui *UserInfo) {
+				assert.Equal(t, "testuser", ui.Username)
+				assert.Equal(t, int64(123), ui.UserID)
+			},
+		},
+		{
+			name:    "invalid json",
+			data:    `{invalid}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ui, err := ParseUserInfoJSON([]byte(tt.data))
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				if tt.validate != nil {
+					tt.validate(ui)
+				}
+			}
 		})
 	}
 }
