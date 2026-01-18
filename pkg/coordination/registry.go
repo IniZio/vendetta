@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -404,9 +405,23 @@ type Event struct {
 
 // NewServer creates a new coordination server
 func NewServer(cfg *Config) *Server {
+	var registry Registry
+
+	if dbPath := os.Getenv("DB_PATH"); dbPath != "" {
+		sqliteRegistry, err := NewSQLiteRegistry(dbPath)
+		if err != nil {
+			fmt.Printf("Warning: failed to initialize SQLite registry, falling back to in-memory: %v\n", err)
+			registry = NewInMemoryRegistry()
+		} else {
+			registry = sqliteRegistry
+		}
+	} else {
+		registry = NewInMemoryRegistry()
+	}
+
 	srv := &Server{
 		config:              cfg,
-		registry:            NewInMemoryRegistry(),
+		registry:            registry,
 		workspaceRegistry:   NewInMemoryWorkspaceRegistry(),
 		router:              http.NewServeMux(),
 		clients:             make(map[chan Event]bool),
@@ -419,7 +434,6 @@ func NewServer(cfg *Config) *Server {
 		fmt.Printf("Warning: failed to initialize provider: %v\n", err)
 	}
 
-	// Load GitHub App configuration if available
 	appConfig, err := github.NewAppConfig()
 	if err != nil {
 		fmt.Printf("Warning: GitHub App not configured: %v\n", err)
