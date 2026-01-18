@@ -1,259 +1,62 @@
 # nexus
 
-**Isolated development environments with remote SSH access**
-
-Nexus creates isolated development environments (Docker/LXC/QEMU) on a coordination server. Each branch gets its own SSH access with your public key seeded, so you can SSH directly into your branch from anywhere.
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                  Coordination Server (Your Dev Host)             │
-│                                                                 │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │  nexus coordination start                               │  │
-│  │  - Runs on port 3001                                      │  │
-│  │  - Manages branch lifecycle                               │  │
-│  │  - Maps SSH ports to branches                             │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                            │                                    │
-│                            ▼                                    │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │  Providers (Docker/LXC/QEMU)                              │  │
-│  │  - Spawn branches locally on this host                     │  │
-│  │  - Configure SSH with user's public key                    │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                            │                                    │
-│            ┌───────────────┼───────────────┐                    │
-│            ▼               ▼               ▼                    │
-│  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐           │
-│  │ Branch 1    │   │ Branch 2    │   │ Branch 3    │           │
-│  │ SSH: :2222  │   │ SSH: :2223  │   │ SSH: :2224  │           │
-│  │ User: alice │   │ User: bob   │   │ User: carol │           │
-│  └─────────────┘   └─────────────┘   └─────────────┘           │
-└─────────────────────────────────────────────────────────────────┘
-                             │
-                             │ SSH (your key grants access)
-                             ▼
-                   ┌─────────────────┐
-                   │  You (Anywhere) │
-                   │  SSH Client     │
-                   └─────────────────┘
-
-# Example: SSH into your branch
-ssh -p 2222 dev@your-server.com
-```
-
-## 🚀 Complete Onboarding Guide
-
-### Step 1: Generate Your SSH Key
-
-```bash
-# Generate an SSH key for nexus (if you don't have one)
-nexus ssh generate
-
-# This creates ~/.ssh/id_ed25519_nexus
-# Your public key will be displayed - share it with your admin
-```
-
-### Step 2: Get Access to a Branch
-
-**Option A: Register with the coordination server (if enabled)**
-```bash
-nexus ssh register your-server.com:3001
-```
-
-**Option B: Share your public key with your administrator**
-```
-Your public key:
-ssh-ed25519 AAAA... your-email@example.com
-```
-
-Your admin will add this key to your branch and tell you:
-- Server address (e.g., `dev.company.com`)
-- SSH port (e.g., `2222`)
-- Username (e.g., `alice`)
-
-### Step 3: Connect to Your Branch
-
-```bash
-# Get connection info including deep links
-nexus branch connect my-feature
-
-# Example output:
-# 🔗 Branch Connection Info
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Branch: my-feature
-# Path:      /home/user/my-app/.nexus/worktrees/my-feature
-#
-# 🐚 SSH Access:
-#   ssh -p 2222 alice@dev.company.com
-#
-# 💻 Deep Links:
-#   VSCode:  vscode://vscode-remote/ssh-remote+dev.company.com:2222/home/alice
-#   Cursor:  cursor://ssh/remote?host=dev.company.com&port=2222&user=alice
-#
-# 🌐 Services:
-#   - http://localhost:23000 (web)
-#   - http://localhost:23001 (api)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### Step 4: Open in Your Editor
-
-**VSCode:**
-```bash
-# Click the deep link or use:
-code --remote ssh-remote+dev.company.com:2222 /home/alice/my-feature
-```
-
-**Cursor:**
-```bash
-# Click the deep link or use cursor:// scheme
-```
-
-**Terminal:**
-```bash
-ssh -p 2222 alice@dev.company.com
-```
-
-### Step 5: Check Running Services
-
-```bash
-# List all services and their URLs
-nexus branch services my-feature
-
-# Output:
-# 📦 Services for branch 'my-feature'
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Service     Port     Local Port  URL
-# web         3000     23000       http://localhost:23000
-# api         4000     23001       http://localhost:23001
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+Remote SSH access to isolated dev environments. Workspaces on Docker/LXC/QEMU.
 
 ---
 
-## 📋 Command Reference
-
-### SSH Management
-
-| Command | Description |
-|---------|-------------|
-| `nexus ssh generate` | Generate SSH key for nexus access |
-| `nexus ssh register <server>` | Register your public key with coordination server |
-| `nexus ssh info <branch>` | Show connection info for a branch |
-
-### Branch Management
-
-| Command | Description |
-|---------|-------------|
-| `nexus branch create <name>` | Create a new branch |
-| `nexus branch up <name>` | Start a branch |
-| `nexus branch down <name>` | Stop a branch |
-| `nexus branch list` | List all branches |
-| `nexus branch rm <name>` | Remove a branch |
-| `nexus branch connect <name>` | Show connection info and deep links |
-| `nexus branch services <name>` | List services and their URLs |
-
-### Server Administration
-
-| Command | Description |
-|---------|-------------|
-| `nexus coordination start` | Start the coordination server |
-| `nexus coordination stop` | Stop the coordination server |
-| `nexus coordination status` | Show server status |
-
----
-
-## 🔧 Configuration
-
-### Server Configuration (`.nexus/coordination.yaml`)
-
-```yaml
-server:
-  host: "0.0.0.0"
-  port: 3001
-  auth_token: "change-this-in-production"
-
-registry:
-  provider: "memory"
-  health_check_interval: "10s"
-  node_timeout: "60s"
-
-auth:
-  enabled: false  # Enable for production with JWT
-  jwt_secret: "your-secure-secret"
-```
-
-### Branch Configuration (`.nexus/config.yaml`)
-
-```yaml
-name: my-branch
-provider: docker
-
-services:
-  web:
-    command: "npm run dev"
-    port: 3000
-  api:
-    command: "npm run server"
-    port: 4000
-
-docker:
-  image: node:20
-```
-
----
-
-## 👥 User Management
-
-### Adding a User (Admin)
-
-Administrators can add users and their SSH public keys via API:
+## Start Staging
 
 ```bash
-curl -X POST http://localhost:3001/api/v1/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "alice",
-    "public_key": "ssh-ed25519 AAAA... alice@example.com",
-    "branch": "my-feature"
-  }'
+cd deploy/envs/staging
+./ops/start.sh
 ```
 
-### List Users (Admin)
+Server: http://localhost:3001
+
+Full guide: [deploy/envs/staging/README.md](deploy/envs/staging/README.md)
+
+---
+
+## Dev: Connect to Workspace
+
+1. Get SSH key: `cat ~/.ssh/id_ed25519.pub`
+2. Register with admin
+3. Get workspace ID from admin
+4. SSH in: `ssh -p 2236 dev@localhost`
+5. Inside: `cd /workspace` → Your code
+
+---
+
+## Admin: Deploy & Manage
+
+[Staging Deployment Guide](deploy/envs/staging/README.md)
+
+- Start server: `deploy/envs/staging/ops/start.sh`
+- Register users: `deploy/envs/staging/ops/users.sh`
+- Create workspaces: `deploy/envs/staging/ops/workspaces.sh`
+- Troubleshoot: `deploy/envs/staging/ops/troubleshoot.sh`
+
+---
+
+## API Reference
+
+[deploy/envs/staging/docs/API.md](deploy/envs/staging/docs/API.md)
+
+---
+
+## Setup from Scratch
+
+[deploy/envs/staging/docs/SETUP.md](deploy/envs/staging/docs/SETUP.md)
+
+---
+
+## Build
 
 ```bash
-curl http://localhost:3001/api/v1/users
-# Returns: {"users":[...],"count":N}
+go build -o bin/nexus ./cmd/nexus
 ```
 
----
-
-## ✨ Features
-
-- **🔒 Isolated Environments**: Docker/LXC/QEMU containers and VMs
-- **🔑 SSH Key Authentication**: Users access branches via SSH with their keys
-- **🌐 Remote Access**: SSH to branches from anywhere
-- **💻 Editor Integration**: Deep links for VSCode and Cursor
-- **📦 Single Binary**: Zero dependencies on the coordination server
-- **🔌 Plugin System**: Extensible rules, skills, and commands
-- **🚀 Service Discovery**: Automatic port mapping and service URLs
-- **🤖 AI Agent Ready**: Auto-configures Cursor, OpenCode, Claude, and more
-
----
-
-## 📚 Documentation
-
-- [Configuration Guide](docs/specs/product/configuration.md)
-- [Plugin System](docs/specs/technical/plugins.md)
-- [Architecture](docs/specs/technical/architecture.md)
-- [Coordination API](docs/coordination-api.md)
-- [Sprint Planning Framework](docs/sprints/SPRINT_FRAMEWORK.md)
-
----
-
-## License
-
-MIT
+Test:
+```bash
+go test ./...
+```
