@@ -457,7 +457,8 @@ hooks:
 	}
 
 	// Create local skills
-	nexusOpsSkill := `name: %s-ops
+	skillName := "nexus"
+	nexusOpsSkill := fmt.Sprintf(`name: %s-ops
 description: nexus workspace management operations
 capabilities:
   - workspace_create: Create new isolated workspaces
@@ -481,8 +482,8 @@ parameters:
     type: string
     description: Git branch for workspace creation
     required: false
-`
-	if err := os.WriteFile(".nexus/templates/skills/%s-ops.yaml", []byte(nexusOpsSkill), 0644); err != nil {
+`, skillName)
+	if err := os.WriteFile(fmt.Sprintf(".nexus/templates/skills/%s-ops.yaml", skillName), []byte(nexusOpsSkill), 0644); err != nil {
 		return err
 	}
 

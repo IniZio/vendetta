@@ -138,6 +138,10 @@ func (p *Pool) put(conn *PooledConnection) error {
 
 	idleConns := 0
 	for _, c := range p.conns[conn.target] {
+		if c == conn {
+			idleConns++ // Count self as idle (we just set inUse=false at line 129)
+			continue
+		}
 		c.mu.Lock()
 		if !c.inUse {
 			idleConns++

@@ -57,12 +57,16 @@ func TestPoolGet(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, transport1)
 	assert.Equal(t, 1, factory.createCount)
+	err = transport1.Connect(ctx, "test://target1")
+	require.NoError(t, err)
 
 	// Get second connection to different target
 	transport2, err := pool.Get(ctx, "test://target2")
 	require.NoError(t, err)
 	require.NotNil(t, transport2)
 	assert.Equal(t, 2, factory.createCount)
+	err = transport2.Connect(ctx, "test://target2")
+	require.NoError(t, err)
 
 	// Return connections to pool
 	err = transport2.Disconnect(ctx)
