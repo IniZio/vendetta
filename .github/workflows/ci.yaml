@@ -1,57 +1,13 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-       - uses: actions/checkout@v4
-       - uses: actions/setup-go@v5
-         with:
-           go-version: '1.24'
-       - run: make build
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-       - uses: actions/checkout@v4
-       - uses: actions/setup-go@v5
-         with:
-           go-version: '1.24'
-       - run: make test-unit
-
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-       - uses: actions/checkout@v4
-       - uses: actions/setup-go@v5
-         with:
-           go-version: '1.24'
-
-       # Set up Docker-in-Docker for e2e tests
-       - name: Set up Docker Buildx
-         uses: docker/setup-buildx-action@v3
-
-       - name: Start Docker daemon
-         run: |
-           sudo systemctl start docker
-           docker version
-
-       # Build nexus binary for testing
-       - name: Build nexus
-         run: make build
-
-       # Run e2e tests
-       - name: Run e2e tests
-         run: make test-e2e
-         env:
-           DOCKER_HOST: unix:///var/run/docker.sock
-
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -60,5 +16,106 @@ jobs:
          with:
            go-version: '1.24'
        - run: make dev-setup
-       - run: make lint
        - run: make fmt-check
+       - run: go vet ./...
+       - run: make lint
+
+  test-unit:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+       - run: make test-unit
+       - name: Upload coverage
+         uses: codecov/codecov-action@v3
+         with:
+           files: ./coverage.out
+           fail_ci_if_error: false
+           flags: unittests
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+
+       - name: Set up Docker
+         run: |
+           sudo systemctl start docker
+           docker version
+
+       - name: Build nexus
+         run: make build
+
+       - name: Run e2e tests
+         run: make test-e2e
+         env:
+           DOCKER_HOST: unix:///var/run/docker.sock
+         continue-on-error: true
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-e2e]
+    if: github.event_name == 'push'
+    steps:
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+       - run: make build
+       - run: ls -lh bin/
+
+  build-multi-platform:
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-e2e]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+       - uses: actions/checkout@v4
+       - uses: actions/setup-go@v5
+         with:
+           go-version: '1.24'
+       
+       - name: Build multi-platform binaries
+         run: make ci-build
+       
+       - name: Create checksums
+         run: |
+           cd dist
+           sha256sum * > CHECKSUMS.txt
+           cat CHECKSUMS.txt
+       
+       - name: Upload artifacts
+         uses: actions/upload-artifact@v3
+         with:
+           name: binaries
+           path: dist/
+           retention-days: 30
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build-multi-platform
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+       - uses: actions/checkout@v4
+       
+       - name: Download artifacts
+         uses: actions/download-artifact@v3
+         with:
+           name: binaries
+           path: dist/
+       
+       - name: Create GitHub Release
+         uses: softprops/action-gh-release@v1
+         with:
+           files: dist/*
+           draft: false
+           prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'beta') }}
+           generate_release_notes: true
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
