@@ -182,3 +182,34 @@ func ParseDependsOn(dependsOnStr string) []string {
 func StringifyDependsOn(deps []string) string {
 	return strings.Join(deps, ", ")
 }
+
+// GitHubInstallation represents a GitHub App installation for a user
+type GitHubInstallation struct {
+	InstallationID int64     `json:"installation_id"`
+	UserID         string    `json:"user_id"`
+	GitHubUserID   int64     `json:"github_user_id"`
+	GitHubUsername string    `json:"github_username"`
+	RepoFullName   string    `json:"repo_full_name"`
+	Token          string    `json:"token"`
+	TokenExpiresAt time.Time `json:"token_expires_at"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+// Validate validates GitHub installation data
+// For user-based auth (no installation), installation_id can be 0
+func (gi *GitHubInstallation) Validate() error {
+	if gi.UserID == "" {
+		return ValidationError{Field: "user_id", Message: "user_id is required"}
+	}
+	if gi.GitHubUserID == 0 {
+		return ValidationError{Field: "github_user_id", Message: "github_user_id is required"}
+	}
+	if gi.GitHubUsername == "" {
+		return ValidationError{Field: "github_username", Message: "github_username is required"}
+	}
+	if gi.Token == "" {
+		return ValidationError{Field: "token", Message: "token is required"}
+	}
+	return nil
+}

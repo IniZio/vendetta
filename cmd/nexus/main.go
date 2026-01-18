@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/nexus/nexus/cmd/internal"
 	"github.com/nexus/nexus/pkg/agent"
 	"github.com/nexus/nexus/pkg/config"
@@ -924,6 +925,28 @@ func runUsageBenchmark(args []string) error {
 }
 
 func main() {
+	// Load .env files in order of precedence
+	// 1. .env in current directory (project root)
+	// 2. .env.local in current directory (local overrides)
+	// 3. .env in deploy/envs/[env]/ (environment-specific)
+	// 4. .env.local in deploy/envs/[env]/ (environment-specific local)
+	envFiles := []string{
+		".env",
+		".env.local",
+	}
+
+	// Also check for staging environment
+	stagingEnvFiles := []string{
+		"deploy/envs/staging/.env",
+		"deploy/envs/staging/.env.local",
+	}
+
+	for _, f := range append(envFiles, stagingEnvFiles...) {
+		if _, err := os.Stat(f); err == nil {
+			_ = godotenv.Load(f)
+		}
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nexus/nexus/pkg/github"
 	"github.com/nexus/nexus/pkg/provider"
 	"github.com/nexus/nexus/pkg/provider/lxc"
 )
@@ -323,15 +324,75 @@ func (r *InMemoryUserRegistry) Delete(username string) error {
 
 // Server represents the coordination server
 type Server struct {
-	config            *Config
-	registry          Registry
-	workspaceRegistry WorkspaceRegistry
-	httpSrv           *http.Server
-	router            *http.ServeMux
-	clients           map[chan Event]bool
-	clientsMu         sync.Mutex
-	commandCh         chan CommandResult
-	provider          provider.Provider
+	config                *Config
+	registry              Registry
+	workspaceRegistry     WorkspaceRegistry
+	httpSrv               *http.Server
+	router                *http.ServeMux
+	clients               map[chan Event]bool
+	clientsMu             sync.Mutex
+	commandCh             chan CommandResult
+	provider              provider.Provider
+	appConfig             *github.AppConfig
+	oauthStateStore       *OAuthStateStore
+	gitHubInstallations   map[string]*GitHubInstallation
+	gitHubInstallationsMu sync.RWMutex
+}
+
+// OAuthStateStore stores OAuth state tokens with expiration for CSRF protection
+type OAuthStateStore struct {
+	states map[string]time.Time
+	mu     sync.RWMutex
+	ttl    time.Duration
+}
+
+// NewOAuthStateStore creates a new OAuth state store
+func NewOAuthStateStore(ttl time.Duration) *OAuthStateStore {
+	store := &OAuthStateStore{
+		states: make(map[string]time.Time),
+		ttl:    ttl,
+	}
+	go store.cleanupExpired()
+	return store
+}
+
+// Store saves an OAuth state token
+func (s *OAuthStateStore) Store(state string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.states[state] = time.Now().Add(s.ttl)
+}
+
+// Validate checks if a state token is valid and removes it
+func (s *OAuthStateStore) Validate(state string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	expiry, exists := s.states[state]
+	if !exists || time.Now().After(expiry) {
+		delete(s.states, state)
+		return false
+	}
+
+	delete(s.states, state)
+	return true
+}
+
+// cleanupExpired removes expired state tokens periodically
+func (s *OAuthStateStore) cleanupExpired() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		s.mu.Lock()
+		now := time.Now()
+		for state, expiry := range s.states {
+			if now.After(expiry) {
+				delete(s.states, state)
+			}
+		}
+		s.mu.Unlock()
+	}
 }
 
 // Event represents a server event for broadcasting
@@ -344,16 +405,26 @@ type Event struct {
 // NewServer creates a new coordination server
 func NewServer(cfg *Config) *Server {
 	srv := &Server{
-		config:            cfg,
-		registry:          NewInMemoryRegistry(),
-		workspaceRegistry: NewInMemoryWorkspaceRegistry(),
-		router:            http.NewServeMux(),
-		clients:           make(map[chan Event]bool),
-		commandCh:         make(chan CommandResult, 100),
+		config:              cfg,
+		registry:            NewInMemoryRegistry(),
+		workspaceRegistry:   NewInMemoryWorkspaceRegistry(),
+		router:              http.NewServeMux(),
+		clients:             make(map[chan Event]bool),
+		commandCh:           make(chan CommandResult, 100),
+		oauthStateStore:     NewOAuthStateStore(5 * time.Minute),
+		gitHubInstallations: make(map[string]*GitHubInstallation),
 	}
 
 	if err := srv.initializeProvider(); err != nil {
 		fmt.Printf("Warning: failed to initialize provider: %v\n", err)
+	}
+
+	// Load GitHub App configuration if available
+	appConfig, err := github.NewAppConfig()
+	if err != nil {
+		fmt.Printf("Warning: GitHub App not configured: %v\n", err)
+	} else {
+		srv.appConfig = appConfig
 	}
 
 	srv.setupRoutes()
@@ -403,6 +474,11 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/api/v1/users/register-github", s.handleM4RegisterGitHub)
 	s.router.HandleFunc("/api/v1/workspaces/create-from-repo", s.handleM4CreateWorkspace)
 	s.router.HandleFunc("/api/v1/workspaces", s.handleM4ListWorkspacesRouter)
+
+	// GitHub OAuth
+	s.router.HandleFunc("/auth/github/callback", s.handleGitHubOAuthCallback)
+	s.router.HandleFunc("/api/github/token", s.handleGetGitHubToken)
+	s.router.HandleFunc("/api/github/oauth-url", s.handleGetGitHubOAuthURL)
 }
 
 // Request routing helpers

@@ -1,12 +1,16 @@
 package coordination
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
+
+	"github.com/nexus/nexus/pkg/github"
 )
 
 // handleRegisterNode handles node registration
@@ -603,4 +607,231 @@ type responseWriter struct {
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+// GitHubOAuthCallbackRequest is the OAuth callback query parameters
+type GitHubOAuthCallbackRequest struct {
+	Code  string `json:"code"`
+	State string `json:"state"`
+	Error string `json:"error"`
+}
+
+// GitHubOAuthCallbackResponse is the OAuth callback response
+type GitHubOAuthCallbackResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}
+
+// handleGitHubOAuthCallback handles GitHub OAuth callback
+// POST /auth/github/callback
+// Query params: code (authorization code), state (CSRF token)
+// Returns: JSON response with status or redirects to success/error page
+func (s *Server) handleGitHubOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	code := r.URL.Query().Get("code")
+	state := r.URL.Query().Get("state")
+	errMsg := r.URL.Query().Get("error")
+
+	if code == "" {
+		if errMsg != "" {
+			log.Printf("GitHub OAuth error: %s", errMsg)
+			http.Redirect(w, r, "/workspace/auth-error?error="+errMsg, http.StatusSeeOther)
+		} else {
+			http.Error(w, "Missing authorization code", http.StatusBadRequest)
+		}
+		return
+	}
+
+	// Validate CSRF token
+	if !s.oauthStateStore.Validate(state) {
+		log.Printf("Invalid OAuth state token: %s", state)
+		resp := GitHubOAuthCallbackResponse{
+			Success: false,
+			Message: "Invalid state token (possibly expired)",
+			Status:  "state_validation_failed",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	// Exchange authorization code for access token
+	appConfig := s.appConfig
+	if appConfig == nil {
+		log.Printf("GitHub App configuration not initialized")
+		http.Error(w, "GitHub App not configured", http.StatusInternalServerError)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	installation, err := github.ExchangeCodeForToken(ctx, appConfig.ClientID, appConfig.ClientSecret, code)
+	if err != nil {
+		log.Printf("Failed to exchange OAuth code: %v", err)
+		resp := GitHubOAuthCallbackResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed to authorize: %v", err),
+			Status:  "exchange_failed",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	// Store GitHub installation in database
+	// For now, we'll store it in memory via the workspace registry
+	// In a production system, this would be a database operation
+	gitHubInstallation := &GitHubInstallation{
+		InstallationID: installation.InstallationID,
+		UserID:         installation.GitHubUsername,
+		GitHubUserID:   installation.GitHubUserID,
+		GitHubUsername: installation.GitHubUsername,
+		Token:          installation.AccessToken,
+		TokenExpiresAt: installation.ExpiresAt,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// Validate the installation
+	if err := gitHubInstallation.Validate(); err != nil {
+		log.Printf("Invalid GitHub installation data: %v", err)
+		resp := GitHubOAuthCallbackResponse{
+			Success: false,
+			Message: fmt.Sprintf("Invalid installation data: %v", err),
+			Status:  "validation_failed",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	s.gitHubInstallationsMu.Lock()
+	s.gitHubInstallations[installation.GitHubUsername] = gitHubInstallation
+	s.gitHubInstallationsMu.Unlock()
+	log.Printf("Stored GitHub installation for user: %s", installation.GitHubUsername)
+
+	// Success response
+	resp := GitHubOAuthCallbackResponse{
+		Success: true,
+		Message: "GitHub installation successful",
+		Status:  "authorized",
+	}
+
+	// Return JSON if Accept header is application/json, otherwise redirect
+	acceptHeader := r.Header.Get("Accept")
+	if strings.Contains(acceptHeader, "application/json") {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
+	} else {
+		// Redirect to success page
+		http.Redirect(w, r, "/workspace/auth-success?user="+installation.GitHubUsername, http.StatusSeeOther)
+	}
+}
+
+// handleGetGitHubToken retrieves a valid GitHub installation access token
+// GET /api/github/token
+// Returns: JSON with token and expiration time
+func (s *Server) handleGetGitHubToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract user ID from request context or header
+	// In a real implementation, this would come from authenticated user context
+	userID := r.Header.Get("X-User-ID")
+	if userID == "" {
+		http.Error(w, "User ID required", http.StatusUnauthorized)
+		return
+	}
+
+	s.gitHubInstallationsMu.RLock()
+	installation, exists := s.gitHubInstallations[userID]
+	s.gitHubInstallationsMu.RUnlock()
+
+	if !exists {
+		resp := map[string]interface{}{
+			"error": "GitHub installation not found for user",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	resp := map[string]interface{}{
+		"token":       installation.Token,
+		"expires_at":  installation.TokenExpiresAt,
+		"user_id":     installation.UserID,
+		"github_user": installation.GitHubUsername,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+}
+
+// GitHubOAuthURLRequest is the request to generate an OAuth authorization URL
+type GitHubOAuthURLRequest struct {
+	RepoFullName string `json:"repo_full_name"`
+}
+
+// GitHubOAuthURLResponse is the OAuth authorization URL
+type GitHubOAuthURLResponse struct {
+	AuthURL string `json:"auth_url"`
+	State   string `json:"state"`
+}
+
+// handleGetGitHubOAuthURL generates a GitHub OAuth authorization URL
+// POST /api/github/oauth-url
+// Body: {repo_full_name: "owner/repo"}
+// Returns: GitHub OAuth authorization URL
+func (s *Server) handleGetGitHubOAuthURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req GitHubOAuthURLRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	appConfig := s.appConfig
+	if appConfig == nil {
+		http.Error(w, "GitHub App not configured", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate state token for CSRF protection
+	state := fmt.Sprintf("state_%d_%s", time.Now().UnixNano(), req.RepoFullName)
+	s.oauthStateStore.Store(state)
+
+	// Build OAuth authorization URL for user-based authentication
+	// This allows the user to authorize the app to act on their behalf
+	authURL := fmt.Sprintf(
+		"https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&state=%s&scope=repo",
+		appConfig.ClientID,
+		url.QueryEscape(appConfig.RedirectURL),
+		state,
+	)
+
+	resp := GitHubOAuthURLResponse{
+		AuthURL: authURL,
+		State:   state,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

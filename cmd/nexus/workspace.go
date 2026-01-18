@@ -72,29 +72,6 @@ func runWorkspaceCreate(repoString string) error {
 
 	fmt.Printf("Repository: %s/%s\n", owner, repo)
 
-	ghPath, err := github.DetectGHCLI()
-	if err != nil {
-		return fmt.Errorf("❌ gh CLI not found: %w", err)
-	}
-
-	fmt.Println("")
-	fmt.Println("📊 Checking repository...")
-
-	isOwned, err := github.VerifyRepoOwnership(ghPath, owner, repo)
-	if err != nil {
-		return fmt.Errorf("failed to verify repository: %w", err)
-	}
-
-	if !isOwned {
-		fmt.Println("⚠️  Repository not found or not accessible. Attempting to fork...")
-		if err := github.ForkRepository(ghPath, owner, repo); err != nil {
-			return fmt.Errorf("failed to fork repository: %w", err)
-		}
-		fmt.Println("✅ Repository forked successfully")
-	} else {
-		fmt.Println("✅ Repository verified")
-	}
-
 	fmt.Println("")
 	fmt.Println("📥 Cloning repository...")
 

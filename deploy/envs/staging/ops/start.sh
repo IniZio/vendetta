@@ -18,4 +18,4 @@ echo "To stop: Ctrl+C"
 echo ""
 
 cd "${SERVER_ROOT}"
-./bin/nexus coordination start
+nexus coordination start

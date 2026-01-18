@@ -67,3 +67,7 @@ pkg/coordination/handlers_expanded_test.go
 # Test directory
 test/
 # Nexus configuration directory (runtime artifacts only)
+/.blackbox/pubring.gpg~
+/.blackbox/pubring.kbx~
+/.blackbox/secring.gpg
+deploy/envs/staging/.env

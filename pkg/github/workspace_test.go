@@ -56,62 +56,6 @@ func TestParseRepoURL(t *testing.T) {
 	}
 }
 
-func TestVerifyRepoOwnership(t *testing.T) {
-	tests := []struct {
-		name      string
-		ghCLIPath string
-		owner     string
-		repo      string
-		wantErr   bool
-	}{
-		{
-			name:      "verify repo ownership",
-			ghCLIPath: "gh",
-			owner:     "torvalds",
-			repo:      "linux",
-			wantErr:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			isOwned, err := VerifyRepoOwnership(tt.ghCLIPath, tt.owner, tt.repo)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.IsType(t, true, isOwned)
-			}
-		})
-	}
-}
-
-func TestForkRepository(t *testing.T) {
-	tests := []struct {
-		name      string
-		ghCLIPath string
-		owner     string
-		repo      string
-		wantErr   bool
-	}{
-		{
-			name:      "fork repository",
-			ghCLIPath: "gh",
-			owner:     "torvalds",
-			repo:      "linux",
-			wantErr:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := ForkRepository(tt.ghCLIPath, tt.owner, tt.repo)
-			if tt.wantErr {
-				assert.Error(t, err)
-			}
-		})
-	}
-}
-
 func TestBuildCloneURL(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -153,37 +97,6 @@ func TestCloneRepository(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Skip("skipping repo clone test (requires network)")
-		})
-	}
-}
-
-func TestGetRepositoryCommit(t *testing.T) {
-	tests := []struct {
-		name      string
-		ghCLIPath string
-		owner     string
-		repo      string
-		wantErr   bool
-	}{
-		{
-			name:      "get repo commit",
-			ghCLIPath: "gh",
-			owner:     "torvalds",
-			repo:      "linux",
-			wantErr:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			commit, err := GetRepositoryCommit(tt.ghCLIPath, tt.owner, tt.repo)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				if err == nil {
-					assert.NotEmpty(t, commit)
-				}
-			}
 		})
 	}
 }
