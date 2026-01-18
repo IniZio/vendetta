@@ -4,6 +4,7 @@ set -euo pipefail
 VERSION="${1:-latest}"
 REPO_URL="https://github.com/IniZio/nexus"
 RELEASES_URL="${REPO_URL}/releases"
+API_URL="https://api.github.com/repos/IniZio/nexus"
 
 NEXUS_BIN_DIR="${HOME}/.local/bin"
 NEXUS_CONFIG_DIR="${HOME}/.nexus"
@@ -65,7 +66,7 @@ download_binary() {
 	local download_url="${RELEASES_URL}/download/${version}/${filename}"
 	local temp_file="/tmp/${filename}"
 	
-	info "Downloading nexus from ${download_url}..."
+	info "Downloading nexus from ${download_url}..." >&2
 	
 	if ! curl -L --progress-bar -o "$temp_file" "$download_url"; then
 		error "Failed to download nexus binary"
@@ -140,7 +141,8 @@ main() {
 	version="${VERSION}"
 	if [[ "$version" == "latest" ]]; then
 		info "Fetching latest release..."
-		version=$(curl -s "${RELEASES_URL}/latest" | grep -oP '"tag_name": "\K[^"]*' || echo "latest")
+		# Use POSIX-compatible grep (works on both macOS/BSD and Linux/GNU)
+		version=$(curl -s "${API_URL}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/' || echo "latest")
 	fi
 	
 	info "Installing version: $version"
