@@ -61,7 +61,8 @@ func NewBaseController(providers []provider.Provider, wtManager worktree.Manager
 		pMap[p.Name()] = p
 	}
 	if wtManager == nil {
-		wtManager = worktree.NewManager(".", ".nexus/worktrees")
+		projectRoot := paths.GetProjectRoot()
+		wtManager = worktree.NewManager(".", paths.GetWorktreesDir(projectRoot))
 	}
 	return &BaseController{
 		Providers:       pMap,
@@ -85,7 +86,8 @@ func (c *BaseController) WorkspaceCreate(_ context.Context, name string) error {
 		root = "."
 	}
 
-	worktreesDir := filepath.Join(root, ".nexus/worktrees")
+	projectRoot := paths.GetProjectRoot()
+	worktreesDir := paths.GetWorktreesDir(projectRoot)
 	if _, err := os.Stat(filepath.Join(worktreesDir, name)); err == nil {
 		return fmt.Errorf("workspace '%s' already exists", name)
 	}
@@ -95,7 +97,7 @@ func (c *BaseController) WorkspaceCreate(_ context.Context, name string) error {
 		return fmt.Errorf("failed to create worktree: %w", err)
 	}
 
-	cfg, err := config.LoadConfig(filepath.Join(root, ".nexus/config.yaml"))
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -109,19 +111,20 @@ func (c *BaseController) WorkspaceCreate(_ context.Context, name string) error {
 		return fmt.Errorf("failed to generate agent configs: %w", err)
 	}
 
-	fmt.Printf("✅ Workspace created at .nexus/worktrees/%s/\n", name)
+	fmt.Printf("✅ Workspace created at %s/%s/\n", paths.GetWorktreesDir(projectRoot), name)
 	return nil
 }
 
 func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 	fmt.Printf("🚀 Starting workspace '%s'...\n", name)
 
-	cfg, err := config.LoadConfig(".nexus/config.yaml")
+	projectRoot := paths.GetProjectRoot()
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	workspacePath, err := filepath.Abs(filepath.Join(".nexus/worktrees", name))
+	workspacePath, err := filepath.Abs(filepath.Join(paths.GetWorktreesDir(projectRoot), name))
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path for workspace: %w", err)
 	}
@@ -159,7 +162,7 @@ func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 
 	fmt.Println("▶️  Starting session...")
 
-	hookPath := filepath.Join(workspacePath, ".nexus/hooks/up.sh")
+	hookPath := filepath.Join(paths.GetConfigDir(projectRoot), "hooks/up.sh")
 	if _, err := os.Stat(hookPath); err == nil {
 		fmt.Printf("🔧 Running setup hook: %s\n", hookPath)
 		if err := c.runHook(ctx, hookPath, cfg, workspacePath); err != nil {
@@ -178,7 +181,8 @@ func (c *BaseController) WorkspaceUp(ctx context.Context, name string) error {
 func (c *BaseController) WorkspaceDown(ctx context.Context, name string) error {
 	fmt.Printf("🛑 Stopping workspace '%s'...\n", name)
 
-	cfg, err := config.LoadConfig(".nexus/config.yaml")
+	projectRoot := paths.GetProjectRoot()
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -208,7 +212,8 @@ func (c *BaseController) WorkspaceDown(ctx context.Context, name string) error {
 func (c *BaseController) WorkspaceShell(ctx context.Context, name string) error {
 	fmt.Printf("🐚 Opening shell in workspace '%s'...\n", name)
 
-	cfg, err := config.LoadConfig(".nexus/config.yaml")
+	projectRoot := paths.GetProjectRoot()
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -231,14 +236,15 @@ func (c *BaseController) WorkspaceShell(ctx context.Context, name string) error 
 func (c *BaseController) WorkspaceList(ctx context.Context) error {
 	fmt.Println("📋 Active workspaces:")
 
-	worktreesDir := ".nexus/worktrees"
+	projectRoot := paths.GetProjectRoot()
+	worktreesDir := paths.GetWorktreesDir(projectRoot)
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		fmt.Println("  No active workspaces")
 		return nil
 	}
 
-	cfg, _ := config.LoadConfig(".nexus/config.yaml")
+	cfg, _ := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 
 	found := false
 	for _, entry := range entries {
@@ -289,7 +295,8 @@ func (c *BaseController) WorkspaceRm(_ context.Context, name string) error {
 }
 
 func (c *BaseController) WorkspaceServices(ctx context.Context, name string) ([]PortMapping, error) {
-	cfg, err := config.LoadConfig(".nexus/config.yaml")
+	projectRoot := paths.GetProjectRoot()
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
@@ -319,13 +326,14 @@ func (c *BaseController) WorkspaceServices(ctx context.Context, name string) ([]
 }
 
 func (c *BaseController) WorkspaceConnect(ctx context.Context, name string) error {
-	cfg, err := config.LoadConfig(".nexus/config.yaml")
+	projectRoot := paths.GetProjectRoot()
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	sessionID := fmt.Sprintf("%s-%s", cfg.Name, name)
-	workspacePath, _ := filepath.Abs(filepath.Join(".nexus/worktrees", name))
+	workspacePath, _ := filepath.Abs(filepath.Join(paths.GetWorktreesDir(projectRoot), name))
 
 	fmt.Println("🔗 Workspace Connection Info")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -441,7 +449,7 @@ hooks:
 - MCP server provides context and capabilities
 - Rules and skills are automatically loaded from templates
 `
-	if err := os.WriteFile(".nexus/templates/rules/nexus-agent.md", []byte(nexusAgentRule), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "templates/rules/nexus-agent.md"), []byte(nexusAgentRule), 0644); err != nil {
 		return err
 	}
 
@@ -465,7 +473,7 @@ hooks:
 - Provides safety net for refactoring
 - Documents expected behavior through tests
 `
-	if err := os.WriteFile(".nexus/templates/rules/tdd.md", []byte(tddRule), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "templates/rules/tdd.md"), []byte(tddRule), 0644); err != nil {
 		return err
 	}
 
@@ -496,7 +504,7 @@ parameters:
     description: Git branch for workspace creation
     required: false
 `, skillName)
-	if err := os.WriteFile(fmt.Sprintf(".nexus/templates/skills/%s-ops.yaml", skillName), []byte(nexusOpsSkill), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), fmt.Sprintf("templates/skills/%s-ops.yaml", skillName)), []byte(nexusOpsSkill), 0644); err != nil {
 		return err
 	}
 
@@ -526,7 +534,7 @@ echo "Services starting... PIDs: API($API_PID), WEB($WEB_PID)"
 echo "Development environment ready."
 wait
 `
-	if err := os.WriteFile(".nexus/hooks/up.sh", []byte(upSh), 0755); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "hooks/up.sh"), []byte(upSh), 0755); err != nil {
 		return err
 	}
 
@@ -534,16 +542,16 @@ wait
 - Follow existing code patterns.
 - Ensure type safety.
 `
-	if err := os.WriteFile(".nexus/agents/rules/base.md", []byte(baseRule), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "agents/rules/base.md"), []byte(baseRule), 0644); err != nil {
 		return err
 	}
 
 	agentDirs := []string{
-		".nexus/agents/cursor",
-		".nexus/agents/opencode",
-		".nexus/agents/claude-desktop",
-		".nexus/agents/claude-code",
-		".nexus/agents/codex",
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents/cursor"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents/opencode"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents/claude-desktop"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents/claude-code"),
+		filepath.Join(paths.GetConfigDir(projectRoot), "agents/codex"),
 	}
 	for _, dir := range agentDirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
@@ -578,7 +586,7 @@ wait
   }
 }
 `
-	if err := os.WriteFile(".nexus/agents/codex/settings.json.tpl", []byte(codexTpl), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "agents/codex/settings.json.tpl"), []byte(codexTpl), 0644); err != nil {
 		return err
 	}
 
@@ -592,7 +600,7 @@ wait
   ]
 }
 `
-	if err := os.WriteFile(".nexus/agents/opencode/opencode.json.tpl", []byte(opencodeTpl), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "agents/opencode/opencode.json.tpl"), []byte(opencodeTpl), 0644); err != nil {
 		return err
 	}
 
@@ -605,7 +613,7 @@ wait
   }
 }
 `
-	if err := os.WriteFile(".nexus/agents/claude-desktop/claude_desktop_config.json.tpl", []byte(claudeDesktopTpl), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "agents/claude-desktop/claude_desktop_config.json.tpl"), []byte(claudeDesktopTpl), 0644); err != nil {
 		return err
 	}
 
@@ -618,7 +626,7 @@ wait
   }
 }
 `
-	if err := os.WriteFile(".nexus/agents/claude-code/claude_code_config.json.tpl", []byte(claudeCodeTpl), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(paths.GetConfigDir(projectRoot), "agents/claude-code/claude_code_config.json.tpl"), []byte(claudeCodeTpl), 0644); err != nil {
 		return err
 	}
 
@@ -628,7 +636,8 @@ wait
 func (c *BaseController) Apply(ctx context.Context) error {
 	fmt.Println("🔄 Applying latest configuration to agent configs...")
 
-	cfg, err := config.LoadConfig(".nexus/config.yaml")
+	projectRoot := paths.GetProjectRoot()
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -691,12 +700,13 @@ func (c *BaseController) Apply(ctx context.Context) error {
 }
 
 func (c *BaseController) generateCursorConfig(cfg *config.Config) error {
+	projectRoot := paths.GetProjectRoot()
 	cursorDir := ".cursor"
 	if err := os.MkdirAll(cursorDir, 0755); err == nil {
 		_ = c.createCursorRules(cursorDir)
 	}
 
-	worktreesDir := ".nexus/worktrees"
+	worktreesDir := paths.GetWorktreesDir(projectRoot)
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -760,7 +770,8 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 		fmt.Printf("⚠️  Warning: failed to write opencode.json: %v\n", err)
 	}
 
-	worktreesDir := ".nexus/worktrees"
+	projectRoot := paths.GetProjectRoot()
+	worktreesDir := paths.GetWorktreesDir(projectRoot)
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -784,10 +795,11 @@ func (c *BaseController) generateOpenCodeConfig(cfg *config.Config) error {
 
 func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) error {
 	// Copy capabilities from project templates to .opencode directory
+	projectRoot := paths.GetProjectRoot()
 	dirMappings := map[string]string{
-		filepath.Join(".opencode", "rules", "nexus"):    ".nexus/templates/rules",
-		filepath.Join(".opencode", "skills", "nexus"):   ".nexus/templates/skills",
-		filepath.Join(".opencode", "commands", "nexus"): ".nexus/templates/commands",
+		filepath.Join(".opencode", "rules", "nexus"):    filepath.Join(paths.GetConfigDir(projectRoot), "templates/rules"),
+		filepath.Join(".opencode", "skills", "nexus"):   filepath.Join(paths.GetConfigDir(projectRoot), "templates/skills"),
+		filepath.Join(".opencode", "commands", "nexus"): filepath.Join(paths.GetConfigDir(projectRoot), "templates/commands"),
 	}
 
 	// Create render data for template variables
@@ -831,12 +843,13 @@ func (c *BaseController) copyPluginCapabilitiesToOpenCode(cfg *config.Config) er
 }
 
 func (c *BaseController) downloadPluginCapabilities(plugin config.TemplateRepo, baseDir string) error {
+	projectRoot := paths.GetProjectRoot()
 	pluginName := "nexus"
 
 	dirMappings := map[string]string{
-		filepath.Join(baseDir, "rules"):    ".nexus/templates/rules",
-		filepath.Join(baseDir, "skills"):   ".nexus/templates/skills",
-		filepath.Join(baseDir, "commands"): ".nexus/templates/commands",
+		filepath.Join(baseDir, "rules"):    filepath.Join(paths.GetConfigDir(projectRoot), "templates/rules"),
+		filepath.Join(baseDir, "skills"):   filepath.Join(paths.GetConfigDir(projectRoot), "templates/skills"),
+		filepath.Join(baseDir, "commands"): filepath.Join(paths.GetConfigDir(projectRoot), "templates/commands"),
 	}
 
 	for localDir, repoPath := range dirMappings {
@@ -1028,7 +1041,8 @@ func (c *BaseController) generateClaudeDesktopConfig(cfg *config.Config) error {
 		fmt.Printf("⚠️  Warning: failed to write claude_desktop_config.json: %v\n", err)
 	}
 
-	worktreesDir := ".nexus/worktrees"
+	projectRoot := paths.GetProjectRoot()
+	worktreesDir := paths.GetWorktreesDir(projectRoot)
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -1063,7 +1077,8 @@ func (c *BaseController) generateClaudeCodeConfig(cfg *config.Config) error {
 		fmt.Printf("⚠️  Warning: failed to write claude_code_config.json: %v\n", err)
 	}
 
-	worktreesDir := ".nexus/worktrees"
+	projectRoot := paths.GetProjectRoot()
+	worktreesDir := paths.GetWorktreesDir(projectRoot)
 	entries, err := os.ReadDir(worktreesDir)
 	if err != nil {
 		return nil
@@ -1138,6 +1153,7 @@ func (c *BaseController) generateContentHash(lockfile *lock.Lockfile) (string, e
 func (c *BaseController) PluginUpdate(ctx context.Context) error {
 	fmt.Println("🔄 Updating plugins to latest versions...")
 
+	projectRoot := paths.GetProjectRoot()
 	lockfile := &lock.Lockfile{
 		Version: "1.0",
 		Plugins: make(map[string]*lock.LockEntry),
@@ -1147,8 +1163,7 @@ func (c *BaseController) PluginUpdate(ctx context.Context) error {
 		},
 	}
 
-	nexusDir := ".nexus"
-	remotesDir := filepath.Join(nexusDir, "remotes")
+	remotesDir := filepath.Join(paths.GetConfigDir(projectRoot), "remotes")
 	entries, err := os.ReadDir(remotesDir)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to read remotes dir: %w", err)
@@ -1213,7 +1228,8 @@ func (c *BaseController) PluginUpdate(ctx context.Context) error {
 func (c *BaseController) PluginList(ctx context.Context) error {
 	fmt.Println("📦 Loaded remote templates:")
 
-	cfg, err := config.LoadConfig(".nexus/config.yaml")
+	projectRoot := paths.GetProjectRoot()
+	cfg, err := config.LoadConfig(filepath.Join(paths.GetConfigDir(projectRoot), "config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -1366,7 +1382,7 @@ func (c *BaseController) detectWorkspaceFromCWD() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	rel, err := filepath.Rel(filepath.Join(root, ".nexus/worktrees"), curr)
+	rel, err := filepath.Rel(paths.GetWorktreesDir(root), curr)
 	if err != nil {
 		return "", err
 	}
