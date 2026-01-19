@@ -15,17 +15,22 @@ type WorkspaceRegistry interface {
 	Update(id string, updates map[string]interface{}) error
 	UpdateStatus(id, status string) error
 	UpdateSSHPort(id string, port int, host string) error
+	UpdateServices(workspaceID string, services map[string]DBService) error
+	UpdateServiceHealth(workspaceID, serviceName, health string) error
+	GetServices(workspaceID string) (map[string]DBService, error)
 	Delete(id string) error
 }
 
 type InMemoryWorkspaceRegistry struct {
 	workspaces map[string]*DBWorkspace
+	services   map[string]map[string]DBService
 	mu         sync.RWMutex
 }
 
 func NewInMemoryWorkspaceRegistry() WorkspaceRegistry {
 	return &InMemoryWorkspaceRegistry{
 		workspaces: make(map[string]*DBWorkspace),
+		services:   make(map[string]map[string]DBService),
 	}
 }
 
@@ -149,5 +154,51 @@ func (r *InMemoryWorkspaceRegistry) Delete(id string) error {
 	defer r.mu.Unlock()
 
 	delete(r.workspaces, id)
+	delete(r.services, id)
 	return nil
+}
+
+func (r *InMemoryWorkspaceRegistry) UpdateServices(workspaceID string, services map[string]DBService) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.workspaces[workspaceID]; !exists {
+		return fmt.Errorf("workspace not found: %s", workspaceID)
+	}
+
+	r.services[workspaceID] = services
+	return nil
+}
+
+func (r *InMemoryWorkspaceRegistry) UpdateServiceHealth(workspaceID, serviceName, health string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	services, exists := r.services[workspaceID]
+	if !exists {
+		return fmt.Errorf("workspace not found: %s", workspaceID)
+	}
+
+	service, exists := services[serviceName]
+	if !exists {
+		return fmt.Errorf("service not found: %s", serviceName)
+	}
+
+	service.HealthStatus = health
+	now := time.Now()
+	service.LastHealthCheck = &now
+	services[serviceName] = service
+	r.services[workspaceID] = services
+	return nil
+}
+
+func (r *InMemoryWorkspaceRegistry) GetServices(workspaceID string) (map[string]DBService, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	services, exists := r.services[workspaceID]
+	if !exists {
+		return make(map[string]DBService), nil
+	}
+	return services, nil
 }

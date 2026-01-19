@@ -11,6 +11,7 @@ import (
 
 	"github.com/nexus/nexus/pkg/github"
 	"github.com/nexus/nexus/pkg/provider"
+	"github.com/nexus/nexus/pkg/provider/docker"
 	"github.com/nexus/nexus/pkg/provider/lxc"
 )
 
@@ -441,6 +442,17 @@ func NewServer(cfg *Config) *Server {
 		srv.appConfig = appConfig
 	}
 
+	if testToken := os.Getenv("GITHUB_TOKEN"); testToken != "" {
+		fmt.Printf("TEST MODE: Injecting GitHub token for development\n")
+		srv.gitHubInstallations["IniZio"] = &GitHubInstallation{
+			Token:          testToken,
+			GitHubUsername: "IniZio",
+			GitHubUserID:   123456,
+			UserID:         "test-user-id",
+			TokenExpiresAt: time.Now().Add(24 * time.Hour),
+		}
+	}
+
 	srv.setupRoutes()
 	return srv
 }
@@ -448,7 +460,7 @@ func NewServer(cfg *Config) *Server {
 func (s *Server) initializeProvider() error {
 	providerType := s.config.Provider.Type
 	if providerType == "" {
-		providerType = "lxc"
+		providerType = "docker"
 	}
 
 	switch providerType {
@@ -456,6 +468,12 @@ func (s *Server) initializeProvider() error {
 		prv, err := lxc.NewLXCProvider()
 		if err != nil {
 			return fmt.Errorf("failed to initialize LXC provider: %w", err)
+		}
+		s.provider = prv
+	case "docker":
+		prv, err := docker.NewDockerProvider()
+		if err != nil {
+			return fmt.Errorf("failed to initialize Docker provider: %w", err)
 		}
 		s.provider = prv
 	default:
@@ -493,6 +511,8 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/auth/github/callback", s.handleGitHubOAuthCallback)
 	s.router.HandleFunc("/api/github/token", s.handleGetGitHubToken)
 	s.router.HandleFunc("/api/github/oauth-url", s.handleGetGitHubOAuthURL)
+	s.router.HandleFunc("/workspace/auth-success", s.handleAuthSuccess)
+	s.router.HandleFunc("/workspace/auth-error", s.handleAuthError)
 }
 
 // Request routing helpers
