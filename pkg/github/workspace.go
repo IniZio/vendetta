@@ -3,6 +3,7 @@ package github
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -43,13 +44,22 @@ func BuildCloneURL(owner, repo string) string {
 	return fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
 }
 
-func CloneRepository(url, destDir string) error {
+func CloneRepository(url, destDir, token string) error {
+	// If token provided and URL is GitHub, inject token for authentication
+	if token != "" && strings.Contains(url, "github.com") {
+		url = strings.Replace(url, "https://github.com",
+			fmt.Sprintf("https://%s@github.com", token), 1)
+	}
+
 	args := []string{"clone", url}
 	if destDir != "" {
 		args = append(args, destDir)
 	}
 
 	cmd := exec.Command("git", args...)
+
+	// Disable terminal prompt to prevent hanging on auth failures
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 
 	var stderr strings.Builder
 	cmd.Stderr = &stderr

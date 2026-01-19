@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/nexus/nexus/pkg/config"
+	"github.com/nexus/nexus/pkg/coordination"
 	"github.com/nexus/nexus/pkg/github"
+	"github.com/nexus/nexus/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -92,7 +94,27 @@ func runWorkspaceCreate(repoString string) error {
 	cloneURL := github.BuildCloneURL(owner, repo)
 	tempDir := filepath.Join(os.TempDir(), fmt.Sprintf("nexus-workspace-%d", time.Now().Unix()))
 
-	if err := github.CloneRepository(cloneURL, tempDir); err != nil {
+	var token string
+	userConfigPath := config.GetUserConfigPath()
+
+	if envToken := os.Getenv("GITHUB_TOKEN"); envToken != "" {
+		token = envToken
+	} else {
+		tempUserCfg, cfgErr := config.LoadUserConfig(userConfigPath)
+		if cfgErr == nil && tempUserCfg.GitHub.Username != "" {
+			projectRoot := paths.GetProjectRoot()
+			dbPath := paths.GetDatabasePath(projectRoot)
+
+			db, dbErr := coordination.NewSQLiteRegistry(dbPath)
+			if dbErr == nil {
+				if installation, instErr := db.GetGitHubInstallation(tempUserCfg.GitHub.Username); instErr == nil {
+					token = installation.Token
+				}
+			}
+		}
+	}
+
+	if err := github.CloneRepository(cloneURL, tempDir, token); err != nil {
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
 
@@ -120,7 +142,6 @@ func runWorkspaceCreate(repoString string) error {
 	fmt.Println("")
 	fmt.Println("💾 Saving workspace info...")
 
-	userConfigPath := config.GetUserConfigPath()
 	userConfigDir := filepath.Dir(userConfigPath)
 
 	if err := config.EnsureConfigDirectory(userConfigDir); err != nil {
