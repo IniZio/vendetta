@@ -717,7 +717,18 @@ func (s *Server) handleGitHubOAuthCallback(w http.ResponseWriter, r *http.Reques
 	s.gitHubInstallationsMu.Lock()
 	s.gitHubInstallations[installation.GitHubUsername] = gitHubInstallation
 	s.gitHubInstallationsMu.Unlock()
-	log.Printf("Stored GitHub installation for user: %s", installation.GitHubUsername)
+	log.Printf("Stored GitHub installation in memory for user: %s", installation.GitHubUsername)
+
+	if sqliteReg, ok := s.registry.(*SQLiteRegistry); ok {
+		log.Printf("DEBUG: Registry is SQLiteRegistry, attempting to persist...")
+		if err := sqliteReg.StoreGitHubInstallation(gitHubInstallation); err != nil {
+			log.Printf("ERROR: Failed to persist GitHub installation to database: %v", err)
+		} else {
+			log.Printf("SUCCESS: Persisted GitHub installation to database for user: %s", installation.GitHubUsername)
+		}
+	} else {
+		log.Printf("WARNING: Registry is not SQLiteRegistry (type: %T), cannot persist to database", s.registry)
+	}
 
 	userRegistry := s.registry.GetUserRegistry()
 	_, err = userRegistry.GetByUsername(installation.GitHubUsername)
@@ -753,6 +764,45 @@ func (s *Server) handleGitHubOAuthCallback(w http.ResponseWriter, r *http.Reques
 		// Redirect to success page
 		http.Redirect(w, r, "/workspace/auth-success?user="+installation.GitHubUsername, http.StatusSeeOther)
 	}
+}
+
+// handleAuthSuccess displays a success page after GitHub OAuth
+func (s *Server) handleAuthSuccess(w http.ResponseWriter, r *http.Request) {
+	user := r.URL.Query().Get("user")
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	html := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head><title>GitHub Authentication Successful</title></head>
+<body>
+	<h1>✅ GitHub Authentication Successful!</h1>
+	<p>User: <strong>%s</strong></p>
+	<p>Your GitHub account has been successfully linked to Nexus.</p>
+	<p>You can now close this window and return to the CLI.</p>
+</body>
+</html>
+`, user)
+	w.Write([]byte(html))
+}
+
+// handleAuthError displays an error page after GitHub OAuth failure
+func (s *Server) handleAuthError(w http.ResponseWriter, r *http.Request) {
+	errMsg := r.URL.Query().Get("error")
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	html := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head><title>GitHub Authentication Failed</title></head>
+<body>
+	<h1>❌ GitHub Authentication Failed</h1>
+	<p>Error: <strong>%s</strong></p>
+	<p>Please try again or contact support.</p>
+</body>
+</html>
+`, errMsg)
+	w.Write([]byte(html))
 }
 
 // handleGetGitHubToken retrieves a valid GitHub installation access token
