@@ -1,0 +1,69 @@
+# Nexus Coordination Server Configuration
+
+server:
+  host: 0.0.0.0
+  port: 3001
+  auth_token: nexus-coordination-token
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+
+# Registry configuration
+registry:
+  provider: memory
+  sync_interval: 30s
+  health_check_interval: 10s
+  node_timeout: 60s
+  max_retries: 3
+  
+  # Storage backend configuration
+  storage:
+    # Type: "sqlite" or "memory"
+    # - sqlite: Persistent storage in SQLite database (recommended for production)
+    # - memory: In-memory storage (data lost on restart, good for testing)
+    type: sqlite
+    
+    # Path to SQLite database file (only used if type=sqlite)
+    # Defaults to ~/.nexus-runtime/data/nexus.db if not specified
+    path: .nexus-runtime/data/nexus.db
+    
+    # Additional configuration options (optional)
+    config:
+      max_connections: 10
+      timeout: 30s
+
+websocket:
+  enabled: true
+  path: /ws
+  origins:
+    - '*'
+  ping_period: 30s
+
+auth:
+  enabled: false
+  jwt_secret: nexus-jwt-secret-key-minimum-16-chars
+  token_expiry: 24h
+
+logging:
+  level: info
+  format: json
+  output: stdout
+  max_size: 100
+  max_backups: 3
+  max_age: 28
+
+# Provider configuration (lxc or docker)
+provider:
+  # Type: "lxc" or "docker"
+  type: docker
+  
+  # Docker-specific configuration
+  docker:
+    base_image: ubuntu:22.04
+  
+  # LXC-specific configuration
+  lxc:
+    remote:
+      node: ""
+      user: root
+      port: 22

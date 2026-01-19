@@ -85,6 +85,8 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.Registry.HealthCheckInterval = "10s"
 	cfg.Registry.NodeTimeout = "60s"
 	cfg.Registry.MaxRetries = 3
+	cfg.Registry.Storage.Type = "sqlite"
+	cfg.Registry.Storage.Path = ""
 
 	cfg.WebSocket.Enabled = true
 	cfg.WebSocket.Path = "/ws"

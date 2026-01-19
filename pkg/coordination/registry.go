@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -404,21 +405,47 @@ type Event struct {
 	Data      interface{} `json:"data"`
 }
 
+// initializeRegistry creates a registry based on configuration
+func initializeRegistry(cfg *Config) Registry {
+	storageType := cfg.Registry.Storage.Type
+	if storageType == "" {
+		storageType = "sqlite"
+	}
+
+	storagePath := cfg.Registry.Storage.Path
+	if storagePath == "" {
+		if home, err := os.UserHomeDir(); err == nil {
+			storagePath = filepath.Join(home, ".nexus-runtime", "data", "nexus.db")
+		} else {
+			storagePath = ".nexus-runtime/data/nexus.db"
+		}
+	}
+
+	if envPath := os.Getenv("DB_PATH"); envPath != "" {
+		storagePath = envPath
+	}
+
+	switch storageType {
+	case "sqlite":
+		sqliteRegistry, err := NewSQLiteRegistry(storagePath)
+		if err != nil {
+			fmt.Printf("Warning: failed to initialize SQLite registry at %s, falling back to in-memory: %v\n", storagePath, err)
+			return NewInMemoryRegistry()
+		}
+		fmt.Printf("Using SQLite registry at: %s\n", storagePath)
+		return sqliteRegistry
+	case "memory":
+		fmt.Printf("Using in-memory registry\n")
+		return NewInMemoryRegistry()
+	default:
+		fmt.Printf("Warning: unknown storage type %s, falling back to in-memory\n", storageType)
+		return NewInMemoryRegistry()
+	}
+}
+
 // NewServer creates a new coordination server
 func NewServer(cfg *Config) *Server {
-	var registry Registry
-
-	if dbPath := os.Getenv("DB_PATH"); dbPath != "" {
-		sqliteRegistry, err := NewSQLiteRegistry(dbPath)
-		if err != nil {
-			fmt.Printf("Warning: failed to initialize SQLite registry, falling back to in-memory: %v\n", err)
-			registry = NewInMemoryRegistry()
-		} else {
-			registry = sqliteRegistry
-		}
-	} else {
-		registry = NewInMemoryRegistry()
-	}
+	registry := initializeRegistry(cfg)
 
 	srv := &Server{
 		config:              cfg,
