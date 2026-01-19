@@ -40,9 +40,14 @@ FINAL_COMPLETION_GUIDE.md
 *_EXECUTION_REPORT.md
 *_FINAL_STATUS.md
 *_MAXIMUM_COMPLETION.md
+*_STATUS.md
+*_PROGRESS.md
+*_SETUP.md
 # Temporary scripts
 scripts/task_*.sh
 scripts/README_TASK_*.md
+test-*.sh
+*.log
 # Temporary documentation
 nexus-config-inizio-README.md
 *_SUMMARY.md
@@ -56,6 +61,17 @@ STAGING_*.md
 QUICK_START_*.md
 RALPH_*.md
 M4_*.md
+GITHUB_AUTH_*.md
+WORKSPACE_PROVISIONING_*.md
+# Temporary Go test files
+check_*.go
+get_*.go
+list_*.go
+test_*.go
+# Session files
+session-*.md
+# Scopes directory (session artifacts)
+.scopes/
 # DAO and database implementation files (experimental)
 pkg/coordination/dao_*.go
 pkg/coordination/db.go
