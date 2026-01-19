@@ -16,17 +16,18 @@ import (
 type LXCProvider struct {
 	name string
 	transport.Manager
-	remote string
+	remote       string
+	portMappings map[string]map[string]int // sessionID -> port mappings (container port -> host port)
 }
 
 func NewLXCProvider() (provider.Provider, error) {
-	// Check if lxc command is available
 	if _, err := exec.LookPath("lxc"); err != nil {
 		return nil, fmt.Errorf("lxc command not found: %w", err)
 	}
 	return &LXCProvider{
-		name:    "lxc",
-		Manager: *transport.NewManager(),
+		name:         "lxc",
+		Manager:      *transport.NewManager(),
+		portMappings: make(map[string]map[string]int),
 	}, nil
 }
 
@@ -427,4 +428,63 @@ func (p *LXCProvider) listRemote(ctx context.Context) ([]provider.Session, error
 	}
 
 	return sessions, nil
+}
+
+func (p *LXCProvider) GetPortMappings(ctx context.Context, sessionID string) (map[string]int, error) {
+	if mappings, exists := p.portMappings[sessionID]; exists {
+		return mappings, nil
+	}
+	return make(map[string]int), nil
+}
+
+func (p *LXCProvider) addProxyDevice(ctx context.Context, containerName, deviceName string, hostPort, containerPort int) error {
+	listenAddr := fmt.Sprintf("listen=tcp:0.0.0.0:%d", hostPort)
+	connectAddr := fmt.Sprintf("connect=tcp:127.0.0.1:%d", containerPort)
+
+	cmd := exec.CommandContext(ctx, "lxc", "config", "device", "add", containerName, deviceName, "proxy", listenAddr, connectAddr)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to add proxy device %s: %w: %s", deviceName, err, string(output))
+	}
+
+	return nil
+}
+
+func (p *LXCProvider) getRandomPort() (int, error) {
+	addr, err := exec.Command("sh", "-c", "python3 -c 'import socket; s=socket.socket(); s.bind((\"\", 0)); print(s.getsockname()[1]); s.close()'").Output()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get random port: %w", err)
+	}
+
+	port := 0
+	fmt.Sscanf(strings.TrimSpace(string(addr)), "%d", &port)
+	return port, nil
+}
+
+func (p *LXCProvider) SetupPortForwarding(ctx context.Context, sessionID string, ports map[string]int) error {
+	containerName := fmt.Sprintf("nexus-%s", sessionID)
+
+	if p.portMappings[sessionID] == nil {
+		p.portMappings[sessionID] = make(map[string]int)
+	}
+
+	for containerPortStr, _ := range ports {
+		hostPort, err := p.getRandomPort()
+		if err != nil {
+			return fmt.Errorf("failed to allocate port for %s: %w", containerPortStr, err)
+		}
+
+		containerPort := 0
+		fmt.Sscanf(containerPortStr, "%d", &containerPort)
+
+		deviceName := fmt.Sprintf("port%s", containerPortStr)
+		if err := p.addProxyDevice(ctx, containerName, deviceName, hostPort, containerPort); err != nil {
+			return err
+		}
+
+		p.portMappings[sessionID][containerPortStr] = hostPort
+		fmt.Printf("[LXC PORT] Mapped container port %s to host port %d\n", containerPortStr, hostPort)
+	}
+
+	return nil
 }

@@ -402,6 +402,26 @@ func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID str
 	}
 	fmt.Printf("[PROVISION INFO] Container started\n")
 
+	portsToForward := map[string]int{"22": 22}
+	for name, svc := range cfg.Services {
+		if svc.Port > 0 {
+			containerPortStr := fmt.Sprintf("%d", svc.Port)
+			portsToForward[containerPortStr] = svc.Port
+			fmt.Printf("[PROVISION PORT] Service %s: port %d\n", name, svc.Port)
+		}
+	}
+
+	if lxcProvider, ok := s.provider.(interface {
+		SetupPortForwarding(context.Context, string, map[string]int) error
+	}); ok {
+		fmt.Printf("[PROVISION PORT] Setting up port forwarding for %d ports\n", len(portsToForward))
+		if err := lxcProvider.SetupPortForwarding(ctx, session.ID, portsToForward); err != nil {
+			fmt.Printf("[PROVISION ERROR] Failed to setup port forwarding: %v\n", err)
+		} else {
+			fmt.Printf("[PROVISION PORT] Port forwarding configured successfully\n")
+		}
+	}
+
 	if err := s.setupSSHAccess(ctx, session.ID, req.GitHubUsername); err != nil {
 		fmt.Printf("[PROVISION WARN] Failed to setup SSH access: %v\n", err)
 	} else {
