@@ -52,6 +52,7 @@ test-*.sh
 nexus-config-inizio-README.md
 *_SUMMARY.md
 *_GUIDE.md
+!TESTING_GUIDE.md
 *_PLAN.md
 *_ROADMAP.md
 *_REPORT.md
