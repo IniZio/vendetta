@@ -57,6 +57,7 @@ type MockDockerClient struct {
 	ContainerExecCreateFn func(ctx context.Context, containerID string, config container.ExecOptions) (types.IDResponse, error)
 	ContainerExecAttachFn func(ctx context.Context, execID string, config container.ExecAttachOptions) (types.HijackedResponse, error)
 	ContainerListFn       func(ctx context.Context, options container.ListOptions) ([]types.Container, error)
+	ContainerInspectFn    func(ctx context.Context, containerID string) (types.ContainerJSON, error)
 }
 
 func (m *MockDockerClient) ImagePull(ctx context.Context, refStr string, options image.PullOptions) (io.ReadCloser, error) {
@@ -118,6 +119,13 @@ func (m *MockDockerClient) ContainerList(ctx context.Context, options container.
 	return []types.Container{}, nil
 }
 
+func (m *MockDockerClient) ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
+	if m.ContainerInspectFn != nil {
+		return m.ContainerInspectFn(ctx, containerID)
+	}
+	return types.ContainerJSON{}, nil
+}
+
 // TestNewDockerProviderWithClient verifies the factory function.
 func TestNewDockerProviderWithClient(t *testing.T) {
 	mock := &MockDockerClient{}
@@ -176,10 +184,9 @@ func TestDockerProvider_Create_WithServices(t *testing.T) {
 	}
 
 	mock.ContainerCreateFn = func(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, platform *ocispec.Platform, containerName string) (container.CreateResponse, error) {
-		// Verify service environment variables are set
 		found := false
 		for _, env := range config.Env {
-			if env == "loom_SERVICE_DB_URL=http://localhost:5432" {
+			if env == "NEXUS_SERVICE_DB_URL=localhost:5432" {
 				found = true
 				break
 			}

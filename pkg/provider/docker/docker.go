@@ -31,6 +31,7 @@ type DockerClientInterface interface {
 	ContainerExecCreate(ctx context.Context, containerID string, config container.ExecOptions) (types.IDResponse, error)
 	ContainerExecAttach(ctx context.Context, execID string, config container.ExecAttachOptions) (types.HijackedResponse, error)
 	ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error)
+	ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error)
 }
 
 // Ensure client.Client implements DockerClientInterface at compile time
@@ -125,6 +126,31 @@ func (p *DockerProvider) Start(ctx context.Context, sessionID string) error {
 	}
 
 	return p.cli.ContainerStart(ctx, sessionID, container.StartOptions{})
+}
+
+func (p *DockerProvider) GetPortMappings(ctx context.Context, sessionID string) (map[string]int, error) {
+	if p.remote != "" {
+		return nil, fmt.Errorf("port mapping query not supported for remote Docker")
+	}
+
+	containerInfo, err := p.cli.ContainerInspect(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect container: %w", err)
+	}
+
+	portMappings := make(map[string]int)
+	for containerPort, bindings := range containerInfo.NetworkSettings.Ports {
+		if len(bindings) > 0 && bindings[0].HostPort != "" {
+			portStr := string(containerPort)
+			portStr = strings.TrimSuffix(portStr, "/tcp")
+
+			var hostPort int
+			fmt.Sscanf(bindings[0].HostPort, "%d", &hostPort)
+			portMappings[portStr] = hostPort
+		}
+	}
+
+	return portMappings, nil
 }
 
 func (p *DockerProvider) Stop(ctx context.Context, sessionID string) error {
@@ -276,14 +302,23 @@ func (p *DockerProvider) createLocal(ctx context.Context, sessionID string, work
 		"22/tcp": {{HostIP: "0.0.0.0", HostPort: "0"}},
 	}
 
-	env := []string{}
-	for name, svc := range cfg.Services {
+	// Expose service ports with dynamic allocation
+	for _, svc := range cfg.Services {
 		if svc.Port > 0 {
 			pStr := fmt.Sprintf("%d/tcp", svc.Port)
 			exposedPorts[nat.Port(pStr)] = struct{}{}
-			portBindings[nat.Port(pStr)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", svc.Port)}}
-			url := fmt.Sprintf("http://localhost:%d", svc.Port)
-			env = append(env, fmt.Sprintf("loom_SERVICE_%s_URL=%s", strings.ToUpper(name), url))
+			portBindings[nat.Port(pStr)] = []nat.PortBinding{
+				{HostIP: "0.0.0.0", HostPort: "0"}, // Auto-assign
+			}
+		}
+	}
+
+	// Initially set internal URLs only - external ports will be injected after container starts
+	env := []string{}
+	for name, svc := range cfg.Services {
+		if svc.Port > 0 {
+			internalServiceURL := fmt.Sprintf("localhost:%d", svc.Port)
+			env = append(env, fmt.Sprintf("NEXUS_SERVICE_%s_URL=%s", strings.ToUpper(name), internalServiceURL))
 		}
 	}
 
