@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -400,6 +401,12 @@ func (s *Server) provisionWorkspace(ctx context.Context, workspaceID, userID str
 		return
 	}
 	fmt.Printf("[PROVISION INFO] Container started\n")
+
+	if err := s.setupSSHAccess(ctx, session.ID, req.GitHubUsername); err != nil {
+		fmt.Printf("[PROVISION WARN] Failed to setup SSH access: %v\n", err)
+	} else {
+		fmt.Printf("[PROVISION INFO] SSH access configured for user: %s\n", req.GitHubUsername)
+	}
 
 	portMappings := make(map[string]int)
 	if dockerProvider, ok := s.provider.(interface {
@@ -824,4 +831,55 @@ func (s *Server) waitForServicesHealthy(ctx context.Context, containerID string,
 			return nil
 		}
 	}
+}
+
+func (s *Server) setupSSHAccess(ctx context.Context, containerID, githubUsername string) error {
+	fmt.Printf("[PROVISION SSH] Setting up SSH access for GitHub user: %s\n", githubUsername)
+
+	keysURL := fmt.Sprintf("https://github.com/%s.keys", githubUsername)
+	resp, err := http.Get(keysURL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch GitHub keys: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to fetch GitHub keys: HTTP %d", resp.StatusCode)
+	}
+
+	keys, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read GitHub keys: %w", err)
+	}
+
+	if len(keys) == 0 {
+		return fmt.Errorf("no SSH keys found for GitHub user: %s", githubUsername)
+	}
+
+	fmt.Printf("[PROVISION SSH] Fetched %d bytes of SSH keys from GitHub\n", len(keys))
+
+	setupCommands := []string{
+		"mkdir -p /root/.ssh",
+		"chmod 700 /root/.ssh",
+		fmt.Sprintf("echo '%s' > /root/.ssh/authorized_keys", string(keys)),
+		"chmod 600 /root/.ssh/authorized_keys",
+		"apt-get update -qq",
+		"apt-get install -y -qq openssh-server",
+		"mkdir -p /run/sshd",
+		"sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config",
+		"sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config",
+		"/usr/sbin/sshd -D &",
+	}
+
+	for _, cmd := range setupCommands {
+		execOpts := provider.ExecOptions{
+			Cmd: []string{"sh", "-c", cmd},
+		}
+		if err := s.provider.Exec(ctx, containerID, execOpts); err != nil {
+			fmt.Printf("[PROVISION SSH WARN] Command failed: %s - %v\n", cmd, err)
+		}
+	}
+
+	fmt.Printf("[PROVISION SSH] SSH server configured and started\n")
+	return nil
 }
